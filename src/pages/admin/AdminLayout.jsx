@@ -1,7 +1,7 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../firebase';
-import { FiHome, FiShoppingBag, FiBox, FiLayers, FiUsers, FiFileText, FiSettings, FiLogOut, FiMenu, FiX } from 'react-icons/fi';
+import { FiHome, FiShoppingBag, FiBox, FiLayers, FiUsers, FiFileText, FiSettings, FiLogOut, FiMenu, FiX, FiExternalLink } from 'react-icons/fi';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -29,51 +29,74 @@ export default function AdminLayout() {
   return (
     <div className="min-h-screen bg-dark-50 flex" dir="rtl">
       {/* Sidebar */}
-      <aside className={`fixed inset-y-0 right-0 z-50 w-64 bg-dark-900 text-white transform transition-transform duration-300 md:translate-x-0 md:static ${sidebarOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}>
-        <div className="flex items-center gap-3 px-6 py-5 border-b border-dark-800">
-          <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-accent-500 rounded-xl flex items-center justify-center text-white font-bold">N</div>
+      <aside className={`fixed inset-y-0 right-0 z-50 w-72 bg-gradient-to-b from-dark-900 via-dark-900 to-primary-900/30 text-white transform transition-transform duration-500 ease-out md:translate-x-0 md:static ${sidebarOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}>
+        {/* Brand */}
+        <div className="flex items-center gap-3 px-6 py-6 border-b border-white/5">
+          <div className="w-11 h-11 bg-gradient-to-br from-primary-500 to-accent-500 rounded-2xl flex items-center justify-center text-white font-extrabold shadow-lg shadow-primary-500/20">N</div>
           <div>
             <h2 className="font-bold text-sm">Nasira Tiba3a</h2>
-            <p className="text-xs text-dark-400">لوحة الإدارة</p>
+            <p className="text-[11px] text-dark-400">لوحة الإدارة</p>
           </div>
         </div>
+
+        {/* Navigation */}
         <nav className="p-4 space-y-1 flex-1">
-          {menuItems.map(item => (
-            <Link key={item.to} to={item.to} onClick={() => setSidebarOpen(false)}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                location.pathname === item.to ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/30' : 'text-dark-400 hover:text-white hover:bg-dark-800'
-              }`}>
-              {item.icon}
-              {item.label}
-            </Link>
-          ))}
+          {menuItems.map(item => {
+            const active = location.pathname === item.to;
+            return (
+              <Link key={item.to} to={item.to} onClick={() => setSidebarOpen(false)}
+                className={`group flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-semibold transition-all duration-300 ${
+                  active
+                    ? 'bg-gradient-to-r from-primary-600 to-primary-700 text-white shadow-lg shadow-primary-600/25'
+                    : 'text-dark-400 hover:text-white hover:bg-white/5'
+                }`}>
+                <span className={`transition-transform duration-300 ${active ? 'scale-110' : 'group-hover:scale-110'}`}>
+                  {item.icon}
+                </span>
+                {item.label}
+                {active && <span className="mr-auto w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>}
+              </Link>
+            );
+          })}
         </nav>
-        <div className="p-4 border-t border-dark-800">
-          <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-dark-400 hover:text-danger-500 hover:bg-dark-800 transition-all w-full">
-            <FiLogOut size={20} /> تسجيل الخروج
+
+        {/* Logout */}
+        <div className="p-4 border-t border-white/5">
+          <button onClick={handleLogout}
+            className="flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-medium text-dark-400 hover:text-red-400 hover:bg-red-500/10 transition-all w-full group">
+            <FiLogOut size={20} className="group-hover:rotate-12 transition-transform" />
+            تسجيل الخروج
           </button>
         </div>
       </aside>
 
       {/* Overlay */}
-      {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setSidebarOpen(false)} />}
+      {sidebarOpen && (
+        <div className="fixed inset-0 bg-dark-900/60 backdrop-blur-sm z-40 md:hidden animate-fade-in" onClick={() => setSidebarOpen(false)} />
+      )}
 
       {/* Main Content */}
       <div className="flex-1 min-w-0">
-        <header className="bg-white/80 backdrop-blur-lg border-b border-dark-200 sticky top-0 z-30">
-          <div className="flex items-center justify-between px-4 sm:px-6 h-16">
-            <button onClick={() => setSidebarOpen(true)} className="md:hidden p-2 rounded-lg text-dark-600 hover:bg-dark-100">
-              <FiMenu size={22} />
-            </button>
-            <h1 className="text-lg font-semibold text-dark-800">
-              {menuItems.find(i => i.to === location.pathname)?.label || 'لوحة الإدارة'}
-            </h1>
-            <Link to="/" className="text-sm text-primary-600 hover:text-primary-700 font-medium">
-              زيارة المتجر ←
+        <header className="bg-white/70 backdrop-blur-2xl border-b border-dark-200/50 sticky top-0 z-30">
+          <div className="flex items-center justify-between px-4 sm:px-8 h-18">
+            <div className="flex items-center gap-4">
+              <button onClick={() => setSidebarOpen(true)} className="md:hidden p-2.5 rounded-xl text-dark-500 hover:bg-dark-100 transition-colors">
+                <FiMenu size={22} />
+              </button>
+              <div>
+                <h1 className="text-lg font-bold text-dark-800">
+                  {menuItems.find(i => i.to === location.pathname)?.label || 'لوحة الإدارة'}
+                </h1>
+                <p className="text-xs text-dark-400 hidden sm:block">إدارة متجر Nasira Tiba3a</p>
+              </div>
+            </div>
+            <Link to="/" className="flex items-center gap-2 text-sm text-primary-600 hover:text-primary-700 font-semibold bg-primary-50 px-4 py-2 rounded-xl hover:bg-primary-100 transition-all">
+              <FiExternalLink size={14} />
+              زيارة المتجر
             </Link>
           </div>
         </header>
-        <main className="p-4 sm:p-6">
+        <main className="p-4 sm:p-8">
           <Outlet />
         </main>
       </div>

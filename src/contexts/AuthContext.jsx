@@ -34,7 +34,19 @@ export function AuthProvider({ children }) {
     return () => unsubscribe();
   }, []);
 
-  const value = { user, isAdmin, loading };
+  // Force refresh admin status (call after creating admin doc)
+  const refreshAdminStatus = async () => {
+    if (auth.currentUser) {
+      try {
+        const adminDoc = await getDoc(doc(db, 'admins', auth.currentUser.uid));
+        setIsAdmin(adminDoc.exists());
+      } catch (error) {
+        console.error('Error refreshing admin status:', error);
+      }
+    }
+  };
+
+  const value = { user, isAdmin, loading, refreshAdminStatus };
 
   return (
     <AuthContext.Provider value={value}>
