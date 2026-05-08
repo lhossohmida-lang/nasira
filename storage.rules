@@ -1,0 +1,27 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isAdmin() {
+      return request.auth != null &&
+      firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid));
+    }
+
+    match /products/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /designs/{allPaths=**} {
+      allow read: if isAdmin();
+      allow create: if request.resource.size < 10 * 1024 * 1024
+                    && request.resource.contentType.matches('image/.*');
+      allow update, delete: if isAdmin();
+    }
+
+    match /invoices/{allPaths=**} {
+      allow read, write: if isAdmin();
+    }
+  }
+}

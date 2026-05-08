@@ -1,0 +1,48 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return request.auth != null &&
+      exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    match /products/{productId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /orders/{orderId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /customers/{customerId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /settings/{settingId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /invoices/{invoiceId} {
+      allow read, create, update, delete: if isAdmin();
+    }
+
+    match /admins/{adminId} {
+      // Allow a signed-in user to read their own admin doc (needed for admin check)
+      allow read: if isSignedIn() && request.auth.uid == adminId;
+      // Allow a signed-in user to create their own admin doc (registration)
+      allow create: if isSignedIn() && request.auth.uid == adminId;
+      // Only existing admins can update/delete admin docs
+      allow update, delete: if isAdmin();
+    }
+  }
+}
