@@ -1,23 +1,21 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiUpload, FiX, FiMove, FiRotateCw, FiMaximize2, FiShoppingBag, FiRefreshCw, FiImage, FiZoomIn, FiZoomOut, FiScissors, FiLayers, FiUser, FiPhone, FiMapPin, FiSend, FiRepeat } from 'react-icons/fi';
+import { FiUpload, FiX, FiMove, FiRotateCw, FiMaximize2, FiShoppingBag, FiRefreshCw, FiImage, FiZoomIn, FiScissors, FiLayers, FiPhone, FiSend, FiRepeat } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import { removeBackground } from '@imgly/background-removal';
 import { db, storage } from '../firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { wilayas, generateOrderNumber, tshirtSizes, printTypes } from '../utils/constants';
+import { wilayas, generateOrderNumber, tshirtSizes } from '../utils/constants';
 
 const CANVAS_W = 600;
 const CANVAS_H = 600;
+const TSHIRT_TEMPLATE_SRC = '/tshirt-template.webp';
+const SINGLE_SIDE_PRICE = 3500;
+const DOUBLE_SIDE_PRICE = 4500;
 
 // Print zone relative to canvas (where the design can be placed on the tshirt)
-const PRINT_ZONE = { x: 0.22, y: 0.18, w: 0.56, h: 0.48 };
-
-const SIDE_LABELS = {
-  front: 'أمام',
-  back: 'خلف',
-};
+const PRINT_ZONE = { x: 0.32, y: 0.25, w: 0.36, h: 0.34 };
 
 const createEmptySideDesign = () => ({
   img: null,
@@ -51,12 +49,15 @@ export default function DesignPage() {
   });
   const [removingBg, setRemovingBg] = useState(false);
   const [removingProgress, setRemovingProgress] = useState(0);
-  const [tshirtColor, setTshirtColor] = useState(TSHIRT_COLORS[0]);
+  const [tshirtColor] = useState(TSHIRT_COLORS[0]);
+  const [tshirtTemplate, setTshirtTemplate] = useState(null);
   const [side, setSide] = useState('front');
   const [showOrderForm, setShowOrderForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [selectedSize, setSelectedSize] = useState('L');
-  const [selectedPrintType, setSelectedPrintType] = useState(printTypes[0]);
+  const [orderStep, setOrderStep] = useState(1);
+  const [deliveryPrices, setDeliveryPrices] = useState({});
+  const [defaultDeliveryPrice, setDefaultDeliveryPrice] = useState(0);
   const [form, setForm] = useState({ customerName: '', phone: '', wilaya: '', commune: '', address: '', note: '' });
 
   const dragging = useRef(false);
@@ -70,6 +71,42 @@ export default function DesignPage() {
   const scale = currentDesign.scale;
   const rotation = currentDesign.rotation;
   const hasAnyDesign = Object.values(sideDesigns).some((design) => design.dataUrl);
+  const designedSideLabels = Object.entries(sideDesigns)
+    .filter(([, design]) => design.dataUrl)
+    .map(([sideKey]) => sideKey === 'front' ? 'أمام' : 'خلف')
+    .join(' + ');
+  const getSideLabel = (sideKey) => sideKey === 'front' ? 'أمام' : 'خلف';
+  const printedSidesCount = Object.values(sideDesigns).filter((design) => design.dataUrl).length;
+  const productPrice = printedSidesCount > 1 ? DOUBLE_SIDE_PRICE : SINGLE_SIDE_PRICE;
+  const selectedDeliveryPrice = deliveryPrices?.[form.wilaya];
+  const deliveryCost = Number(
+    selectedDeliveryPrice === '' || selectedDeliveryPrice === null || selectedDeliveryPrice === undefined
+      ? defaultDeliveryPrice
+      : selectedDeliveryPrice
+  );
+  const orderTotal = productPrice + deliveryCost;
+
+  useEffect(() => {
+    const img = new Image();
+    img.onload = () => setTshirtTemplate(img);
+    img.src = TSHIRT_TEMPLATE_SRC;
+  }, []);
+
+  useEffect(() => {
+    async function fetchDeliverySettings() {
+      try {
+        const snap = await getDoc(doc(db, 'settings', 'general'));
+        if (!snap.exists()) return;
+        const data = snap.data();
+        setDeliveryPrices(data.deliveryPrices || {});
+        setDefaultDeliveryPrice(Number(data.deliveryPrice || 0));
+      } catch (err) {
+        console.error('Delivery settings fetch failed:', err);
+      }
+    }
+
+    fetchDeliverySettings();
+  }, []);
 
   const updateSideDesign = useCallback((updates, targetSide = side) => {
     setSideDesigns((prev) => ({
@@ -93,6 +130,28 @@ export default function DesignPage() {
   const drawTshirt = useCallback((ctx, tshirtSide = side) => {
     const w = CANVAS_W;
     const h = CANVAS_H;
+
+    if (tshirtTemplate) {
+      ctx.save();
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(0, 0, w, h);
+
+      const scale = Math.min((w * 0.94) / tshirtTemplate.naturalWidth, (h * 0.94) / tshirtTemplate.naturalHeight);
+      const dw = tshirtTemplate.naturalWidth * scale;
+      const dh = tshirtTemplate.naturalHeight * scale;
+      const dx = (w - dw) / 2;
+      const dy = (h - dh) / 2;
+
+      ctx.shadowColor = 'rgba(15, 23, 42, 0.12)';
+      ctx.shadowBlur = 18;
+      ctx.shadowOffsetY = 10;
+      ctx.drawImage(tshirtTemplate, dx, dy, dw, dh);
+      ctx.shadowColor = 'transparent';
+
+      ctx.restore();
+      return;
+    }
+
     ctx.save();
 
     // T-shirt body shape
@@ -182,7 +241,7 @@ export default function DesignPage() {
     ctx.fill();
 
     ctx.restore();
-  }, [tshirtColor, side]);
+  }, [tshirtColor, side, tshirtTemplate]);
 
   // Main draw
   const draw = useCallback(() => {
@@ -455,7 +514,20 @@ export default function DesignPage() {
       toast.error('الرجاء رفع صورة التصميم أولاً');
       return;
     }
+    setOrderStep(1);
     setShowOrderForm(true);
+  };
+
+  const handleNextOrderStep = () => {
+    if (orderStep === 1 && (!form.customerName || !form.wilaya)) {
+      toast.error('يرجى إدخال الاسم واختيار الولاية');
+      return;
+    }
+    if (orderStep === 2 && !form.phone) {
+      toast.error('يرجى إدخال رقم الهاتف');
+      return;
+    }
+    setOrderStep((step) => Math.min(step + 1, 3));
   };
 
   const dataUrlToBlob = (dataUrl) => {
@@ -505,7 +577,7 @@ export default function DesignPage() {
       for (const [sideKey, design] of designedSides) {
         const designRecord = {
           side: sideKey,
-          sideLabel: SIDE_LABELS[sideKey],
+          sideLabel: getSideLabel(sideKey),
           bgRemoved: design.bgRemoved,
           position: design.pos,
           scale: design.scale,
@@ -557,22 +629,23 @@ export default function DesignPage() {
         items: [{
           productName: 'تيشرت مخصص',
           size: selectedSize,
-          color: tshirtColor.name,
-          printType: selectedPrintType,
+          color: 'أبيض',
           quantity: 1,
-          price: 0,
-          side: designedSides.map(([sideKey]) => SIDE_LABELS[sideKey]).join(' + '),
+          price: productPrice,
+          side: designedSides.map(([sideKey]) => getSideLabel(sideKey)).join(' + '),
         }],
-        totalPrice: 0,
+        productPrice,
+        deliveryCost,
+        totalPrice: orderTotal,
         totalCost: 0,
-        netProfit: 0,
+        netProfit: productPrice,
         status: 'new',
         designImageUrl,
         customizedTshirtUrl,
         customDesigns,
         designedSides: designedSides.map(([sideKey]) => sideKey),
-        tshirtColor: tshirtColor.name,
-        tshirtColorHex: tshirtColor.value,
+        tshirtColor: 'أبيض',
+        tshirtColorHex: '#FFFFFF',
         designSide: designedSides.map(([sideKey]) => sideKey).join(','),
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -735,32 +808,9 @@ export default function DesignPage() {
                   خلف 🔄
                 </button>
               </div>
-            </div>
-
-            {/* T-shirt color picker */}
-            <div className="bg-white rounded-3xl shadow-premium p-6">
-              <h3 className="font-bold text-dark-800 text-base mb-4 flex items-center gap-2">
-                <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-white text-xs">🎨</span>
-                لون التيشرت
-              </h3>
-              <div className="grid grid-cols-4 gap-3">
-                {TSHIRT_COLORS.map((c) => (
-                  <button key={c.value} onClick={() => setTshirtColor(c)}
-                    className={`group relative w-full aspect-square rounded-2xl border-2 transition-all hover:scale-110 ${tshirtColor.value === c.value ? 'border-primary-500 shadow-lg shadow-primary-500/20 scale-105' : 'border-dark-200 hover:border-dark-300'}`}
-                    style={{ backgroundColor: c.value }}
-                    title={c.name}
-                  >
-                    {tshirtColor.value === c.value && (
-                      <span className="absolute inset-0 flex items-center justify-center text-lg">
-                        {c.dark ? '✓' : '✓'}
-                      </span>
-                    )}
-                    <span className={`absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] font-medium whitespace-nowrap ${c.dark ? 'text-dark-500' : 'text-dark-400'}`}>
-                      {c.name}
-                    </span>
-                  </button>
-                ))}
-              </div>
+              <p className="mt-3 text-xs text-dark-400 leading-relaxed">
+                يمكن الطباعة على الأمام فقط أو الخلف فقط أو الاثنين معًا. اترك الوجه بدون صورة إذا لا تريد الطباعة عليه.
+              </p>
             </div>
 
             {/* Design controls */}
@@ -841,7 +891,7 @@ export default function DesignPage() {
                 <div className="text-5xl animate-float">👕</div>
                 <h4 className="font-bold text-dark-700">كيف تستخدم المصمم؟</h4>
                 <ol className="text-sm text-dark-400 space-y-2 text-right list-decimal list-inside">
-                  <li>اختر لون التيشرت والوجه (أمام/خلف)</li>
+                  <li>اختر الوجه المطلوب للطباعة (أمام/خلف)</li>
                   <li>ارفع صورة التصميم الخاص بك</li>
                   <li>ستُزال الخلفية تلقائياً بالذكاء الاصطناعي</li>
                   <li>اسحب وعدّل حجم ومكان الصورة</li>
@@ -862,61 +912,100 @@ export default function DesignPage() {
               <button onClick={() => setShowOrderForm(false)} className="p-2 rounded-xl hover:bg-dark-100 text-dark-400"><FiX size={20} /></button>
             </div>
 
-            <form onSubmit={handleSubmitOrder} className="space-y-4">
-              {/* Size & Print Type */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-dark-600 mb-1">المقاس</label>
-                  <select value={selectedSize} onChange={e => setSelectedSize(e.target.value)}
-                    className="w-full px-3 py-2.5 border border-dark-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20">
-                    {tshirtSizes.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
+            <form onSubmit={handleSubmitOrder} className="space-y-5">
+              <div className="grid grid-cols-3 gap-2 text-center text-xs font-semibold">
+                {[1, 2, 3].map((stepNumber) => (
+                  <div key={stepNumber} className={`rounded-2xl py-2 ${orderStep === stepNumber ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/20' : 'bg-dark-50 text-dark-400'}`}>
+                    {stepNumber === 1 ? 'المعلومات' : stepNumber === 2 ? 'الهاتف' : 'الفاتورة'}
+                  </div>
+                ))}
+              </div>
+
+              {orderStep === 1 && (
+                <div className="space-y-4 animate-fade-in-up">
+                  <div className="rounded-2xl bg-primary-50 border border-primary-100 p-4 text-sm text-primary-700 leading-relaxed">
+                    اختر المقاس والولاية أولا حتى نحسب سعر التوصيل في الفاتورة.
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-dark-600 mb-1">الاسم الكامل *</label>
+                      <input name="customerName" value={form.customerName} onChange={e => setForm(p => ({...p, customerName: e.target.value}))} required
+                        placeholder="اكتب اسمك" className="w-full px-4 py-3 border border-dark-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-dark-600 mb-1">المقاس</label>
+                      <select value={selectedSize} onChange={e => setSelectedSize(e.target.value)}
+                        className="w-full px-4 py-3 border border-dark-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20">
+                        {tshirtSizes.map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-dark-600 mb-1">الولاية *</label>
+                    <select name="wilaya" value={form.wilaya} onChange={e => setForm(p => ({...p, wilaya: e.target.value}))} required
+                      className="w-full px-4 py-3 border border-dark-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20">
+                      <option value="">اختر الولاية</option>
+                      {wilayas.map(w => <option key={w} value={w}>{w}</option>)}
+                    </select>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-dark-600 mb-1">نوع الطباعة</label>
-                  <select value={selectedPrintType} onChange={e => setSelectedPrintType(e.target.value)}
-                    className="w-full px-3 py-2.5 border border-dark-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20">
-                    {printTypes.map(p => <option key={p} value={p}>{p}</option>)}
-                  </select>
+              )}
+
+              {orderStep === 2 && (
+                <div className="space-y-4 animate-fade-in-up">
+                  <h3 className="font-semibold text-dark-700 flex items-center gap-2 text-sm"><FiPhone size={14} /> معلومات التواصل</h3>
+                  <input name="phone" value={form.phone} onChange={e => setForm(p => ({...p, phone: e.target.value}))} required type="tel"
+                    placeholder="رقم الهاتف *" className="w-full px-4 py-3 border border-dark-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20" />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <input name="commune" value={form.commune} onChange={e => setForm(p => ({...p, commune: e.target.value}))}
+                      placeholder="البلدية (اختياري)" className="w-full px-4 py-3 border border-dark-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20" />
+                    <input name="address" value={form.address} onChange={e => setForm(p => ({...p, address: e.target.value}))}
+                      placeholder="العنوان (اختياري)" className="w-full px-4 py-3 border border-dark-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20" />
+                  </div>
+                  <textarea name="note" value={form.note} onChange={e => setForm(p => ({...p, note: e.target.value}))} rows={3}
+                    placeholder="ملاحظة للطلب (اختياري)" className="w-full px-4 py-3 border border-dark-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 resize-none" />
                 </div>
-              </div>
+              )}
 
-              {/* Customer info */}
-              <div className="space-y-3">
-                <h3 className="font-semibold text-dark-700 flex items-center gap-2 text-sm"><FiUser size={14} /> معلوماتك</h3>
-                <input name="customerName" value={form.customerName} onChange={e => setForm(p => ({...p, customerName: e.target.value}))} required
-                  placeholder="الاسم الكامل *" className="w-full px-4 py-3 border border-dark-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20" />
-                <input name="phone" value={form.phone} onChange={e => setForm(p => ({...p, phone: e.target.value}))} required type="tel"
-                  placeholder="رقم الهاتف *" className="w-full px-4 py-3 border border-dark-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20" />
-              </div>
+              {orderStep === 3 && (
+                <div className="space-y-4 animate-fade-in-up">
+                  <div className="bg-dark-50 rounded-2xl p-4 text-sm space-y-3">
+                    <div className="flex justify-between"><span className="text-dark-500">الاسم</span><span className="font-semibold text-dark-800">{form.customerName}</span></div>
+                    <div className="flex justify-between"><span className="text-dark-500">الولاية</span><span className="font-semibold text-dark-800">{form.wilaya}</span></div>
+                    <div className="flex justify-between"><span className="text-dark-500">المقاس</span><span className="font-semibold text-dark-800">{selectedSize}</span></div>
+                    <div className="flex justify-between"><span className="text-dark-500">الوجه</span><span className="font-semibold text-dark-800">{designedSideLabels || 'لم يتم اختيار وجه'}</span></div>
+                  </div>
 
-              <div className="space-y-3">
-                <h3 className="font-semibold text-dark-700 flex items-center gap-2 text-sm"><FiMapPin size={14} /> عنوان التوصيل</h3>
-                <select name="wilaya" value={form.wilaya} onChange={e => setForm(p => ({...p, wilaya: e.target.value}))} required
-                  className="w-full px-4 py-3 border border-dark-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20">
-                  <option value="">اختر الولاية *</option>
-                  {wilayas.map(w => <option key={w} value={w}>{w}</option>)}
-                </select>
-                <input name="commune" value={form.commune} onChange={e => setForm(p => ({...p, commune: e.target.value}))}
-                  placeholder="البلدية" className="w-full px-4 py-3 border border-dark-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20" />
-                <input name="address" value={form.address} onChange={e => setForm(p => ({...p, address: e.target.value}))}
-                  placeholder="العنوان" className="w-full px-4 py-3 border border-dark-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20" />
-                <textarea name="note" value={form.note} onChange={e => setForm(p => ({...p, note: e.target.value}))} rows={2}
-                  placeholder="ملاحظة (اختياري)" className="w-full px-4 py-3 border border-dark-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 resize-none" />
-              </div>
+                  <div className="rounded-2xl border border-primary-100 overflow-hidden">
+                    <div className="bg-primary-600 text-white px-4 py-3 font-bold">الفاتورة</div>
+                    <div className="p-4 text-sm space-y-3">
+                      <div className="flex justify-between"><span className="text-dark-500">سعر التيشرت</span><span className="font-bold">{productPrice.toLocaleString('fr-DZ')} دج</span></div>
+                      <div className="flex justify-between"><span className="text-dark-500">حقوق التوصيل</span><span className="font-bold">{deliveryCost.toLocaleString('fr-DZ')} دج</span></div>
+                      <div className="border-t border-dark-100 pt-3 flex justify-between text-base"><span className="font-bold text-dark-800">الإجمالي</span><span className="font-extrabold text-primary-700">{orderTotal.toLocaleString('fr-DZ')} دج</span></div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
-              {/* Summary */}
-              <div className="bg-dark-50 rounded-xl p-4 text-sm space-y-1">
-                <div className="flex justify-between"><span className="text-dark-500">اللون</span><span className="font-medium">{tshirtColor.name}</span></div>
-                <div className="flex justify-between"><span className="text-dark-500">المقاس</span><span className="font-medium">{selectedSize}</span></div>
-                <div className="flex justify-between"><span className="text-dark-500">الطباعة</span><span className="font-medium">{selectedPrintType}</span></div>
-                <div className="flex justify-between"><span className="text-dark-500">الوجه</span><span className="font-medium">{side === 'front' ? 'أمام' : 'خلف'}</span></div>
+              <div className="flex gap-2">
+                {orderStep > 1 && (
+                  <button type="button" onClick={() => setOrderStep((step) => Math.max(step - 1, 1))}
+                    className="px-5 py-3 rounded-xl bg-dark-100 text-dark-600 font-semibold hover:bg-dark-200 transition-colors">
+                    رجوع
+                  </button>
+                )}
+                {orderStep < 3 ? (
+                  <button type="button" onClick={handleNextOrderStep}
+                    className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-primary-600 to-primary-700 text-white py-3 rounded-xl font-semibold hover:from-primary-700 hover:to-primary-800 shadow-lg shadow-primary-600/20">
+                    التالي
+                  </button>
+                ) : (
+                  <button type="submit" disabled={submitting}
+                    className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-primary-600 to-primary-700 text-white py-3 rounded-xl font-semibold hover:from-primary-700 hover:to-primary-800 disabled:opacity-50 shadow-lg shadow-primary-600/20">
+                    {submitting ? <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> جاري الإرسال...</> : <><FiSend size={18} /> تأكيد وإرسال الطلب</>}
+                  </button>
+                )}
               </div>
-
-              <button type="submit" disabled={submitting}
-                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-primary-600 to-primary-700 text-white py-4 rounded-xl font-semibold text-lg hover:from-primary-700 hover:to-primary-800 disabled:opacity-50 shadow-lg shadow-primary-600/20">
-                {submitting ? <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> جاري الإرسال...</> : <><FiSend size={18} /> تأكيد وإرسال الطلب</>}
-              </button>
             </form>
           </div>
         </div>
