@@ -1,5 +1,5 @@
-import { Link } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useState, useRef } from 'react';
 import { collection, query, where, getDocs, limit, orderBy } from 'firebase/firestore';
 import { db } from '../firebase';
 import { formatPrice } from '../utils/constants';
@@ -9,6 +9,20 @@ import LoadingSpinner from '../components/LoadingSpinner';
 export default function HomePage() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const uploadRef = useRef(null);
+
+  const handleDesignUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      sessionStorage.setItem('pendingDesign', reader.result);
+      navigate('/products');
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
 
   useEffect(() => {
     async function fetchProducts() {
@@ -212,13 +226,11 @@ export default function HomePage() {
           <p className="text-white/50 text-lg mb-10 max-w-md mx-auto">
             ارفع تصميمك واطبعه على التيشرت بالطريقة اللي تحبها
           </p>
-          <Link
-            to="/products"
-            className="group inline-flex items-center gap-3 bg-gradient-to-r from-primary-500 via-accent-500 to-primary-500 animate-gradient-shift text-white px-10 py-4.5 rounded-2xl font-bold hover:opacity-90 transition-all shadow-2xl shadow-primary-500/20 hover:-translate-y-1"
-          >
-            ابدأ الآن
+          <label className="group inline-flex items-center gap-3 bg-gradient-to-r from-primary-500 via-accent-500 to-primary-500 animate-gradient-shift text-white px-10 py-4 rounded-2xl font-bold hover:opacity-90 transition-all shadow-2xl shadow-primary-500/20 hover:-translate-y-1 cursor-pointer">
+            ابدأ الآن — ارفع تصميمك
             <FiArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
-          </Link>
+            <input ref={uploadRef} type="file" accept="image/*" onChange={handleDesignUpload} className="hidden" />
+          </label>
         </div>
       </section>
     </div>

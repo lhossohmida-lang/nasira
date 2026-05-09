@@ -80,24 +80,33 @@ export default function TshirtCustomizer({ tshirtImageUrl, onUpdate }) {
     }
   }, [draw, designImg, designDataUrl, onUpdate]);
 
+  const loadDesignFromUrl = useCallback((dataUrl) => {
+    const img = new Image();
+    img.onload = () => {
+      const s = Math.min((W * 0.5) / img.naturalWidth, (H * 0.45) / img.naturalHeight, 1);
+      setScale(s);
+      setPos({ x: (W - img.naturalWidth * s) / 2, y: H * 0.22 });
+      setRotation(0);
+      setDesignImg(img);
+      setDesignDataUrl(dataUrl);
+    };
+    img.src = dataUrl;
+  }, []);
+
+  useEffect(() => {
+    const pending = sessionStorage.getItem('pendingDesign');
+    if (pending) {
+      sessionStorage.removeItem('pendingDesign');
+      loadDesignFromUrl(pending);
+    }
+  }, [loadDesignFromUrl]);
+
   const handleFile = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 10 * 1024 * 1024) return;
     const reader = new FileReader();
-    reader.onloadend = () => {
-      const dataUrl = reader.result;
-      const img = new Image();
-      img.onload = () => {
-        const s = Math.min((W * 0.5) / img.naturalWidth, (H * 0.45) / img.naturalHeight, 1);
-        setScale(s);
-        setPos({ x: (W - img.naturalWidth * s) / 2, y: H * 0.22 });
-        setRotation(0);
-        setDesignImg(img);
-        setDesignDataUrl(dataUrl);
-      };
-      img.src = dataUrl;
-    };
+    reader.onloadend = () => loadDesignFromUrl(reader.result);
     reader.readAsDataURL(file);
     e.target.value = '';
   };
