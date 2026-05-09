@@ -7,7 +7,6 @@ import { seedProducts } from './utils/seedData';
 
 // Layouts
 import Navbar from './components/Navbar';
-import Footer from './components/Footer';
 import AdminLayout from './pages/admin/AdminLayout';
 import AdminRoute from './components/AdminRoute';
 
@@ -45,7 +44,6 @@ function CustomerLayout() {
           <Route path="track-order" element={<TrackOrderPage />} />
         </Routes>
       </main>
-      <Footer />
     </div>
   );
 }
