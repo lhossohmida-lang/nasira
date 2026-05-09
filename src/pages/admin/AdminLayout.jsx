@@ -1,18 +1,21 @@
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+﻿import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../firebase';
-import { FiHome, FiShoppingBag, FiBox, FiLayers, FiUsers, FiFileText, FiSettings, FiLogOut, FiMenu, FiX, FiExternalLink } from 'react-icons/fi';
+import {
+  FiHome, FiShoppingBag, FiBox, FiLayers, FiUsers,
+  FiFileText, FiSettings, FiLogOut, FiMenu, FiX, FiExternalLink, FiChevronLeft
+} from 'react-icons/fi';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 
 const menuItems = [
-  { to: '/admin/dashboard', icon: <FiHome size={20} />, label: 'لوحة التحكم' },
-  { to: '/admin/orders', icon: <FiShoppingBag size={20} />, label: 'الطلبات' },
-  { to: '/admin/products', icon: <FiBox size={20} />, label: 'المنتجات' },
-  { to: '/admin/inventory', icon: <FiLayers size={20} />, label: 'المخزون' },
-  { to: '/admin/customers', icon: <FiUsers size={20} />, label: 'الزبائن' },
-  { to: '/admin/invoices', icon: <FiFileText size={20} />, label: 'الفواتير' },
-  { to: '/admin/settings', icon: <FiSettings size={20} />, label: 'الإعدادات' },
+  { to: '/admin/dashboard', icon: <FiHome size={19} />, label: 'لوحة التحكم' },
+  { to: '/admin/orders',    icon: <FiShoppingBag size={19} />, label: 'الطلبات' },
+  { to: '/admin/products',  icon: <FiBox size={19} />, label: 'المنتجات' },
+  { to: '/admin/inventory', icon: <FiLayers size={19} />, label: 'المخزون' },
+  { to: '/admin/customers', icon: <FiUsers size={19} />, label: 'الزبائن' },
+  { to: '/admin/invoices',  icon: <FiFileText size={19} />, label: 'الفواتير' },
+  { to: '/admin/settings',  icon: <FiSettings size={19} />, label: 'الإعدادات' },
 ];
 
 export default function AdminLayout() {
@@ -26,45 +29,77 @@ export default function AdminLayout() {
     navigate('/admin/login');
   };
 
+  const currentLabel = menuItems.find(i => i.to === location.pathname)?.label || 'لوحة الإدارة';
+
   return (
-    <div className="min-h-screen bg-dark-50 flex" dir="rtl">
-      {/* Sidebar */}
-      <aside className={`fixed inset-y-0 right-0 z-50 w-72 bg-gradient-to-b from-dark-900 via-dark-900 to-primary-900/30 text-white transform transition-transform duration-500 ease-out md:translate-x-0 md:static ${sidebarOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}>
+    <div style={{ minHeight: '100vh', background: '#f8f9fc', display: 'flex', direction: 'rtl' }}>
+
+      {/* ===== SIDEBAR ===== */}
+      <aside style={{
+        position: 'fixed', top: 0, right: 0, bottom: 0, zIndex: 50,
+        width: 268,
+        background: 'linear-gradient(175deg, #1a2340 0%, #075985 50%, #1a2340 100%)',
+        display: 'flex', flexDirection: 'column',
+        transform: sidebarOpen ? 'translateX(0)' : 'translateX(100%)',
+        transition: 'transform 0.35s cubic-bezier(0.4,0,0.2,1)',
+        boxShadow: '4px 0 40px rgba(13,19,38,0.25)',
+      }} className="md:translate-x-0 md:static md:transform-none">
+
         {/* Brand */}
-        <div className="flex items-center gap-3 px-6 py-6 border-b border-white/5">
-          <div className="w-11 h-11 bg-gradient-to-br from-primary-500 to-accent-500 rounded-2xl flex items-center justify-center text-white font-extrabold shadow-lg shadow-primary-500/20">N</div>
-          <div>
-            <h2 className="font-bold text-sm">Nasira Tiba3a</h2>
-            <p className="text-[11px] text-dark-400">لوحة الإدارة</p>
+        <div style={{ padding: '24px 20px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 44, height: 44, background: '#f0f9ff', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 16px rgba(14,165,233,0.4)', flexShrink: 0, overflow: 'hidden' }}>
+              <img src="/app-icon-192.png" alt="طباعة التيشرتات" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </div>
+            <div>
+              <div style={{ fontWeight: 800, color: '#fff', fontSize: 16 }}>طباعة التيشرتات</div>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>لوحة الإدارة</div>
+            </div>
           </div>
         </div>
 
         {/* Navigation */}
-        <nav className="p-4 space-y-1 flex-1">
+        <nav style={{ padding: '16px 12px', flex: 1, overflowY: 'auto' }}>
+          <p style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0 8px', marginBottom: 10 }}>القائمة الرئيسية</p>
           {menuItems.map(item => {
             const active = location.pathname === item.to;
             return (
               <Link key={item.to} to={item.to} onClick={() => setSidebarOpen(false)}
-                className={`group flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-semibold transition-all duration-300 ${
-                  active
-                    ? 'bg-gradient-to-r from-primary-600 to-primary-700 text-white shadow-lg shadow-primary-600/25'
-                    : 'text-dark-400 hover:text-white hover:bg-white/5'
-                }`}>
-                <span className={`transition-transform duration-300 ${active ? 'scale-110' : 'group-hover:scale-110'}`}>
-                  {item.icon}
-                </span>
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 12,
+                  padding: '12px 14px', borderRadius: 14,
+                  fontSize: 14, fontWeight: 600,
+                  textDecoration: 'none', marginBottom: 4,
+                  color: active ? '#fff' : 'rgba(255,255,255,0.5)',
+                  background: active ? 'linear-gradient(135deg, rgba(14,165,233,0.9), rgba(56,189,248,0.8))' : 'transparent',
+                  boxShadow: active ? '0 4px 18px rgba(14,165,233,0.45)' : 'none',
+                  transition: 'all 0.22s ease',
+                }}
+                onMouseEnter={e => { if (!active) { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = 'rgba(255,255,255,0.85)'; } }}
+                onMouseLeave={e => { if (!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.5)'; } }}
+              >
+                <span style={{ opacity: active ? 1 : 0.7 }}>{item.icon}</span>
                 {item.label}
-                {active && <span className="mr-auto w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>}
+                {active && <FiChevronLeft size={14} style={{ marginRight: 'auto', opacity: 0.7 }} />}
               </Link>
             );
           })}
         </nav>
 
         {/* Logout */}
-        <div className="p-4 border-t border-white/5">
-          <button onClick={handleLogout}
-            className="flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-medium text-dark-400 hover:text-red-400 hover:bg-red-500/10 transition-all w-full group">
-            <FiLogOut size={20} className="group-hover:rotate-12 transition-transform" />
+        <div style={{ padding: '12px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <button onClick={handleLogout} style={{
+            display: 'flex', alignItems: 'center', gap: 12,
+            padding: '12px 14px', borderRadius: 14,
+            fontSize: 14, fontWeight: 600,
+            color: 'rgba(255,100,100,0.7)', background: 'transparent',
+            border: 'none', cursor: 'pointer', width: '100%',
+            transition: 'all 0.2s ease',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(231,76,60,0.12)'; e.currentTarget.style.color = '#e74c3c'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,100,100,0.7)'; }}
+          >
+            <FiLogOut size={19} />
             تسجيل الخروج
           </button>
         </div>
@@ -72,31 +107,48 @@ export default function AdminLayout() {
 
       {/* Overlay */}
       {sidebarOpen && (
-        <div className="fixed inset-0 bg-dark-900/60 backdrop-blur-sm z-40 md:hidden animate-fade-in" onClick={() => setSidebarOpen(false)} />
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(13,19,38,0.55)', backdropFilter: 'blur(4px)', zIndex: 40 }}
+          className="md:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
-      {/* Main Content */}
-      <div className="flex-1 min-w-0">
-        <header className="bg-white/70 backdrop-blur-2xl border-b border-dark-200/50 sticky top-0 z-30">
-          <div className="flex items-center justify-between px-4 sm:px-8 h-18">
-            <div className="flex items-center gap-4">
-              <button onClick={() => setSidebarOpen(true)} className="md:hidden p-2.5 rounded-xl text-dark-500 hover:bg-dark-100 transition-colors">
-                <FiMenu size={22} />
-              </button>
-              <div>
-                <h1 className="text-lg font-bold text-dark-800">
-                  {menuItems.find(i => i.to === location.pathname)?.label || 'لوحة الإدارة'}
-                </h1>
-                <p className="text-xs text-dark-400 hidden sm:block">إدارة متجر Nasira Tiba3a</p>
-              </div>
+      {/* ===== MAIN CONTENT ===== */}
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', marginRight: 0 }} className="admin-main">
+
+        {/* Header */}
+        <header style={{
+          position: 'sticky', top: 0, zIndex: 30,
+          background: 'rgba(248,249,252,0.92)',
+          backdropFilter: 'blur(20px)',
+          borderBottom: '1px solid rgba(197,204,224,0.5)',
+          padding: '0 20px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          height: 64,
+          boxShadow: '0 2px 12px rgba(13,19,38,0.05)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <button className="md:hidden" onClick={() => setSidebarOpen(true)} style={{
+              padding: 10, borderRadius: 12, border: 'none', cursor: 'pointer',
+              background: '#e0f2fe', color: '#0284c7',
+            }}>
+              <FiMenu size={20} />
+            </button>
+            <div>
+              <h1 style={{ fontSize: 17, fontWeight: 800, color: '#0d1326' }}>{currentLabel}</h1>
+              <p style={{ fontSize: 12, color: '#8896b0', fontWeight: 500 }}>إدارة متجر Shop Disin</p>
             </div>
-            <Link to="/" className="flex items-center gap-2 text-sm text-primary-600 hover:text-primary-700 font-semibold bg-primary-50 px-4 py-2 rounded-xl hover:bg-primary-100 transition-all">
-              <FiExternalLink size={14} />
-              زيارة المتجر
-            </Link>
           </div>
+          <Link to="/" style={{
+            display: 'inline-flex', alignItems: 'center', gap: 7,
+            fontSize: 13, color: '#0284c7', textDecoration: 'none', fontWeight: 700,
+            background: '#e0f2fe', padding: '8px 16px', borderRadius: 12,
+            border: '1px solid rgba(14,165,233,0.15)',
+            transition: 'all 0.2s ease',
+          }}>
+            <FiExternalLink size={14} /> زيارة المتجر
+          </Link>
         </header>
-        <main className="p-4 sm:p-8">
+
+        <main style={{ padding: '28px 24px', flex: 1 }}>
           <Outlet />
         </main>
       </div>

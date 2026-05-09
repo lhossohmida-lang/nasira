@@ -18,6 +18,9 @@ export default function CheckoutPage() {
 
   const handleChange = (e) => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
 
+  const uploadWithTimeout = (promise, ms = 15000) =>
+    Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (cartItems.length === 0) { toast.error('السلة فارغة'); return; }
@@ -32,21 +35,25 @@ export default function CheckoutPage() {
 
       const itemWithDesign = cartItems.find(i => i.designPreview || i.compositePreview || i.designFile);
       if (itemWithDesign) {
-        if (itemWithDesign.designPreview) {
-          const blob = await fetch(itemWithDesign.designPreview).then(r => r.blob());
-          const fileRef = ref(storage, `designs/original_${orderNumber}_${Date.now()}`);
-          await uploadBytes(fileRef, blob);
-          designImageUrl = await getDownloadURL(fileRef);
-        } else if (itemWithDesign.designFile) {
-          const fileRef = ref(storage, `designs/${orderNumber}_${Date.now()}`);
-          await uploadBytes(fileRef, itemWithDesign.designFile);
-          designImageUrl = await getDownloadURL(fileRef);
-        }
-        if (itemWithDesign.compositePreview) {
-          const blob = await fetch(itemWithDesign.compositePreview).then(r => r.blob());
-          const fileRef = ref(storage, `designs/preview_${orderNumber}_${Date.now()}`);
-          await uploadBytes(fileRef, blob);
-          customizedTshirtUrl = await getDownloadURL(fileRef);
+        try {
+          if (itemWithDesign.designPreview) {
+            const blob = await fetch(itemWithDesign.designPreview).then(r => r.blob());
+            const fileRef = ref(storage, `designs/original_${orderNumber}_${Date.now()}`);
+            await uploadWithTimeout(uploadBytes(fileRef, blob));
+            designImageUrl = await uploadWithTimeout(getDownloadURL(fileRef));
+          } else if (itemWithDesign.designFile) {
+            const fileRef = ref(storage, `designs/${orderNumber}_${Date.now()}`);
+            await uploadWithTimeout(uploadBytes(fileRef, itemWithDesign.designFile));
+            designImageUrl = await uploadWithTimeout(getDownloadURL(fileRef));
+          }
+          if (itemWithDesign.compositePreview) {
+            const blob = await fetch(itemWithDesign.compositePreview).then(r => r.blob());
+            const fileRef = ref(storage, `designs/preview_${orderNumber}_${Date.now()}`);
+            await uploadWithTimeout(uploadBytes(fileRef, blob));
+            customizedTshirtUrl = await uploadWithTimeout(getDownloadURL(fileRef));
+          }
+        } catch (uploadErr) {
+          console.warn('Image upload failed:', uploadErr.message);
         }
       }
 

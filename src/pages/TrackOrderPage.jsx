@@ -1,9 +1,9 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import { getStatusInfo, formatDate, formatPrice } from '../utils/constants';
 import toast from 'react-hot-toast';
-import { FiSearch, FiPackage } from 'react-icons/fi';
+import { FiSearch, FiPackage, FiClock } from 'react-icons/fi';
 
 export default function TrackOrderPage() {
   const [orderNumber, setOrderNumber] = useState('');
@@ -33,56 +33,93 @@ export default function TrackOrderPage() {
   const currentStepIndex = order ? statusSteps.indexOf(order.status) : -1;
 
   return (
-    <div className="min-h-screen py-8" dir="rtl">
-      <div className="max-w-2xl mx-auto px-4">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-primary-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <FiPackage className="text-primary-600" size={28} />
-          </div>
-          <h1 className="text-3xl font-bold text-dark-900 mb-2">تتبع الطلب</h1>
-          <p className="text-dark-500">أدخل رقم الطلب لمعرفة حالته</p>
-        </div>
+    <div style={{ minHeight: '100vh', direction: 'rtl', background: '#f8f9fc' }}>
 
-        <form onSubmit={handleSearch} className="flex gap-3 mb-8">
+      {/* Header */}
+      <div style={{ background: 'linear-gradient(145deg, #075985, #0284c7)', padding: '48px 20px 64px', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+          <div className="animate-blob" style={{ position: 'absolute', top: '-10%', right: '5%', width: 260, height: 260, background: 'rgba(255,255,255,0.06)', borderRadius: '60%', filter: 'blur(40px)' }} />
+        </div>
+        <div style={{ maxWidth: 640, margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 10 }}>
+          <div style={{ width: 64, height: 64, background: 'rgba(255,255,255,0.15)', borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px', backdropFilter: 'blur(10px)' }}>
+            <FiPackage size={28} color="#fff" />
+          </div>
+          <h1 style={{ fontSize: 36, fontWeight: 900, color: '#fff', marginBottom: 8 }}>تتبع طلبك</h1>
+          <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 16 }}>أدخل رقم الطلب لمعرفة حالته الحالية</p>
+        </div>
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 32, background: 'linear-gradient(to top, #f8f9fc, transparent)' }} />
+      </div>
+
+      <div style={{ maxWidth: 640, margin: '-24px auto 0', padding: '0 20px 60px', position: 'relative', zIndex: 10 }}>
+
+        {/* Search Form */}
+        <form onSubmit={handleSearch} style={{ display: 'flex', gap: 10, marginBottom: 28 }}>
           <input type="text" value={orderNumber} onChange={e => setOrderNumber(e.target.value)}
-            placeholder="مثال: NT-260508-1234" dir="ltr"
-            className="flex-1 px-4 py-3 border border-dark-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 text-center font-mono" />
-          <button type="submit" disabled={loading}
-            className="px-6 py-3 bg-primary-600 text-white rounded-xl font-semibold hover:bg-primary-700 transition-all disabled:opacity-50 flex items-center gap-2">
-            <FiSearch size={18} />
+            placeholder="مثال: SD-260508-1234" dir="ltr"
+            style={{
+              flex: 1, padding: '13px 16px', background: '#fff',
+              border: '1.5px solid rgba(197,204,224,0.6)', borderRadius: 14,
+              fontSize: 14, fontFamily: 'inherit', outline: 'none', textAlign: 'center',
+              fontWeight: 600, color: '#1a2340',
+              boxShadow: '0 2px 12px rgba(13,19,38,0.05)',
+            }}
+            onFocus={e => { e.target.style.borderColor = '#0284c7'; e.target.style.boxShadow = '0 0 0 3px rgba(14,165,233,0.1)'; }}
+            onBlur={e => { e.target.style.borderColor = 'rgba(197,204,224,0.6)'; e.target.style.boxShadow = '0 2px 12px rgba(13,19,38,0.05)'; }}
+          />
+          <button type="submit" disabled={loading} style={{
+            padding: '13px 24px', background: loading ? '#7dd3fc' : 'linear-gradient(135deg,#0284c7,#38bdf8)',
+            color: '#fff', borderRadius: 14, fontWeight: 800, fontSize: 14, border: 'none',
+            cursor: loading ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', gap: 8,
+            fontFamily: 'inherit', boxShadow: '0 4px 16px rgba(14,165,233,0.35)',
+            whiteSpace: 'nowrap',
+          }}>
+            {loading ? (
+              <div className="animate-spin" style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%' }} />
+            ) : <FiSearch size={16} />}
             {loading ? 'بحث...' : 'بحث'}
           </button>
         </form>
 
+        {/* Order Result */}
         {order && (
-          <div className="bg-white rounded-2xl p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-6">
+          <div className="animate-scale-in" style={{ background: '#fff', borderRadius: 20, padding: '28px', border: '1px solid rgba(197,204,224,0.4)', boxShadow: '0 4px 24px rgba(13,19,38,0.07)' }}>
+
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
               <div>
-                <p className="text-sm text-dark-400">رقم الطلب</p>
-                <p className="font-bold text-lg font-mono">{order.orderNumber}</p>
+                <p style={{ fontSize: 12, color: '#8896b0', fontWeight: 600, marginBottom: 4 }}>رقم الطلب</p>
+                <p style={{ fontWeight: 800, fontSize: 18, color: '#1a2340', fontFamily: 'monospace' }}>{order.orderNumber}</p>
               </div>
-              <span className={`px-4 py-1.5 rounded-full text-sm font-medium ${getStatusInfo(order.status).color}`}>
+              <span style={{
+                padding: '7px 16px', borderRadius: 100, fontSize: 13, fontWeight: 700,
+                background: '#e0f2fe', color: '#0284c7',
+              }}>
                 {getStatusInfo(order.status).label}
               </span>
             </div>
 
-            {/* Progress */}
+            {/* Progress Bar */}
             {order.status !== 'cancelled' && (
-              <div className="mb-6">
-                <div className="flex items-center justify-between relative">
-                  <div className="absolute top-4 right-4 left-4 h-1 bg-dark-200 rounded-full">
-                    <div className="h-full bg-primary-500 rounded-full transition-all duration-500"
-                      style={{ width: `${Math.max(0, (currentStepIndex / (statusSteps.length - 1)) * 100)}%` }} />
+              <div style={{ marginBottom: 28 }}>
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                  {/* Track line */}
+                  <div style={{ position: 'absolute', top: 16, right: '8%', left: '8%', height: 3, background: '#f1f3f9', borderRadius: 100 }}>
+                    <div style={{ height: '100%', background: 'linear-gradient(90deg, #38bdf8, #0284c7)', borderRadius: 100, transition: 'width 0.6s ease', width: `${Math.max(0, (currentStepIndex / (statusSteps.length - 1)) * 100)}%` }} />
                   </div>
                   {statusSteps.map((step, i) => {
                     const info = getStatusInfo(step);
                     const isActive = i <= currentStepIndex;
                     return (
-                      <div key={step} className="relative z-10 flex flex-col items-center">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${isActive ? 'bg-primary-500 text-white' : 'bg-dark-200 text-dark-400'}`}>
-                          {i + 1}
-                        </div>
-                        <span className={`text-[10px] mt-1 ${isActive ? 'text-primary-600 font-medium' : 'text-dark-400'}`}>
+                      <div key={step} style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+                        <div style={{
+                          width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: 11, fontWeight: 800, marginBottom: 8,
+                          background: isActive ? 'linear-gradient(135deg,#0284c7,#38bdf8)' : '#f1f3f9',
+                          color: isActive ? '#fff' : '#c5cce0',
+                          boxShadow: isActive ? '0 3px 12px rgba(14,165,233,0.35)' : 'none',
+                          transition: 'all 0.3s ease',
+                        }}>{i + 1}</div>
+                        <span style={{ fontSize: 10, fontWeight: 600, color: isActive ? '#0284c7' : '#c5cce0', textAlign: 'center', lineHeight: 1.2 }}>
                           {info.label}
                         </span>
                       </div>
@@ -93,30 +130,33 @@ export default function TrackOrderPage() {
             )}
 
             {/* Items */}
-            <div className="border-t border-dark-200 pt-4">
-              <h3 className="font-semibold text-dark-800 mb-3">المنتجات</h3>
+            <div style={{ borderTop: '1px solid #f1f3f9', paddingTop: 20, marginBottom: 16 }}>
+              <h3 style={{ fontWeight: 800, color: '#1a2340', marginBottom: 14, fontSize: 15 }}>المنتجات</h3>
               {order.items?.map((item, i) => (
-                <div key={i} className="flex justify-between text-sm py-2 border-b border-dark-100 last:border-0">
-                  <span className="text-dark-600">{item.productName} ({item.size}, {item.color}) × {item.quantity}</span>
-                  <span className="font-medium">{formatPrice(item.price * item.quantity)}</span>
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f8f9fc', fontSize: 14 }}>
+                  <span style={{ color: '#475280' }}>{item.productName} ({item.size}, {item.color}) × {item.quantity}</span>
+                  <span style={{ fontWeight: 700, color: '#1a2340' }}>{formatPrice(item.price * item.quantity)}</span>
                 </div>
               ))}
-              <div className="flex justify-between font-bold mt-3 text-lg">
-                <span>المجموع</span>
-                <span className="text-primary-600">{formatPrice(order.totalPrice)}</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 900, marginTop: 14, fontSize: 17 }}>
+                <span style={{ color: '#1a2340' }}>المجموع</span>
+                <span style={{ background: 'linear-gradient(135deg,#0284c7,#38bdf8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                  {formatPrice(order.totalPrice)}
+                </span>
               </div>
             </div>
 
-            <div className="border-t border-dark-200 mt-4 pt-4 text-sm text-dark-500">
-              <p>📅 تاريخ الطلب: {formatDate(order.createdAt)}</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#8896b0', fontSize: 12, fontWeight: 500 }}>
+              <FiClock size={13} /> تاريخ الطلب: {formatDate(order.createdAt)}
             </div>
           </div>
         )}
 
         {searched && !order && !loading && (
-          <div className="text-center py-12">
-            <div className="text-5xl mb-4">📦</div>
-            <p className="text-dark-500">لم يتم العثور على طلب بهذا الرقم</p>
+          <div style={{ textAlign: 'center', padding: '60px 0' }} className="animate-fade-in">
+            <div style={{ fontSize: 56, marginBottom: 16 }} className="animate-float">📦</div>
+            <p style={{ color: '#8896b0', fontSize: 16, fontWeight: 600 }}>لم يتم العثور على طلب بهذا الرقم</p>
+            <p style={{ color: '#c5cce0', fontSize: 13, marginTop: 6 }}>تأكد من صحة رقم الطلب وحاول مجددًا</p>
           </div>
         )}
       </div>

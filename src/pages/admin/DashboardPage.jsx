@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
-import { collection, query, getDocs, where, orderBy, Timestamp } from 'firebase/firestore';
+﻿import { useEffect, useState } from 'react';
+import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { formatPrice } from '../../utils/constants';
-import { FiShoppingBag, FiDollarSign, FiTrendingUp, FiAlertTriangle, FiPackage } from 'react-icons/fi';
+import { FiShoppingBag, FiDollarSign, FiTrendingUp, FiAlertTriangle, FiPackage, FiArrowUp } from 'react-icons/fi';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import LoadingSpinner from '../../components/LoadingSpinner';
 
@@ -33,12 +33,11 @@ export default function DashboardPage() {
           return d >= monthStart;
         });
 
-        const todaySales = todayOrders.reduce((s, o) => s + (o.totalPrice || 0), 0);
-        const monthSales = monthOrders.reduce((s, o) => s + (o.totalPrice || 0), 0);
+        const todaySales  = todayOrders.reduce((s, o) => s + (o.totalPrice || 0), 0);
+        const monthSales  = monthOrders.reduce((s, o) => s + (o.totalPrice || 0), 0);
         const todayProfit = todayOrders.reduce((s, o) => s + (o.netProfit || 0), 0);
         const monthProfit = monthOrders.reduce((s, o) => s + (o.netProfit || 0), 0);
 
-        // Low stock
         const lowStock = [];
         products.forEach(p => {
           if (!p.stock) return;
@@ -50,7 +49,6 @@ export default function DashboardPage() {
         });
         setLowStockProducts(lowStock.slice(0, 10));
 
-        // Top products
         const productCounts = {};
         orders.forEach(o => {
           (o.items || []).forEach(i => {
@@ -61,11 +59,7 @@ export default function DashboardPage() {
           .sort((a, b) => b.count - a.count).slice(0, 5);
         setTopProducts(top);
 
-        setStats({
-          totalOrders: orders.length,
-          todayOrders: todayOrders.length,
-          todaySales, monthSales, todayProfit, monthProfit,
-        });
+        setStats({ totalOrders: orders.length, todayOrders: todayOrders.length, todaySales, monthSales, todayProfit, monthProfit });
       } catch (e) { console.error(e); }
       finally { setLoading(false); }
     }
@@ -75,78 +69,123 @@ export default function DashboardPage() {
   if (loading) return <LoadingSpinner text="جاري تحميل البيانات..." />;
 
   const statCards = [
-    { label: 'طلبات اليوم', value: stats?.todayOrders || 0, icon: <FiShoppingBag />, color: 'from-blue-500 to-blue-600' },
-    { label: 'إجمالي الطلبات', value: stats?.totalOrders || 0, icon: <FiPackage />, color: 'from-purple-500 to-purple-600' },
-    { label: 'مبيعات اليوم', value: formatPrice(stats?.todaySales || 0), icon: <FiDollarSign />, color: 'from-emerald-500 to-emerald-600' },
-    { label: 'مبيعات الشهر', value: formatPrice(stats?.monthSales || 0), icon: <FiDollarSign />, color: 'from-orange-500 to-orange-600' },
-    { label: 'ربح اليوم', value: formatPrice(stats?.todayProfit || 0), icon: <FiTrendingUp />, color: 'from-green-500 to-green-600' },
-    { label: 'ربح الشهر', value: formatPrice(stats?.monthProfit || 0), icon: <FiTrendingUp />, color: 'from-indigo-500 to-indigo-600' },
+    { label: 'طلبات اليوم',   value: stats?.todayOrders || 0,          icon: <FiShoppingBag size={20} />, gradient: 'linear-gradient(135deg,#0284c7,#38bdf8)', shadow: 'rgba(14,165,233,0.35)' },
+    { label: 'إجمالي الطلبات', value: stats?.totalOrders || 0,          icon: <FiPackage size={20} />,     gradient: 'linear-gradient(135deg,#e84393,#ff5fa0)', shadow: 'rgba(232,67,147,0.35)' },
+    { label: 'مبيعات اليوم',  value: formatPrice(stats?.todaySales || 0),   icon: <FiDollarSign size={20} />, gradient: 'linear-gradient(135deg,#00b894,#00cec9)', shadow: 'rgba(0,184,148,0.35)' },
+    { label: 'مبيعات الشهر',  value: formatPrice(stats?.monthSales || 0),   icon: <FiDollarSign size={20} />, gradient: 'linear-gradient(135deg,#fdcb6e,#e17055)', shadow: 'rgba(253,203,110,0.4)' },
+    { label: 'ربح اليوم',     value: formatPrice(stats?.todayProfit || 0),  icon: <FiTrendingUp size={20} />, gradient: 'linear-gradient(135deg,#0984e3,#74b9ff)', shadow: 'rgba(9,132,227,0.35)' },
+    { label: 'ربح الشهر',     value: formatPrice(stats?.monthProfit || 0),  icon: <FiArrowUp size={20} />,    gradient: 'linear-gradient(135deg,#7dd3fc,#0284c7)', shadow: 'rgba(162,155,254,0.4)' },
   ];
 
-  const COLORS = ['#5c7cfa', '#f06595', '#40c057', '#fab005', '#7950f2'];
+  const PIE_COLORS = ['#0284c7', '#e84393', '#00b894', '#fdcb6e', '#0984e3'];
+
+  const CustomTooltip = ({ active, payload }) => {
+    if (active && payload?.length) {
+      return (
+        <div style={{ background: '#fff', border: '1px solid rgba(197,204,224,0.5)', borderRadius: 12, padding: '10px 16px', boxShadow: '0 4px 20px rgba(13,19,38,0.1)', fontSize: 13 }}>
+          <p style={{ color: '#6272a0', marginBottom: 4 }}>{payload[0].name || payload[0].payload.name}</p>
+          <p style={{ fontWeight: 700, color: '#0284c7' }}>{payload[0].value}</p>
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
-    <div className="space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+
       {/* Stat Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 16 }}>
         {statCards.map((card, i) => (
-          <div key={i} className="bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
-            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${card.color} flex items-center justify-center text-white mb-3`}>
-              {card.icon}
+          <div key={i} style={{
+            background: '#fff', borderRadius: 20, padding: '20px 18px',
+            border: '1px solid rgba(197,204,224,0.35)',
+            boxShadow: '0 2px 12px rgba(13,19,38,0.04)',
+            display: 'flex', flexDirection: 'column', gap: 12,
+          }}>
+            <div style={{
+              width: 44, height: 44, borderRadius: 14,
+              background: card.gradient,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#fff', boxShadow: `0 4px 14px ${card.shadow}`,
+            }}>{card.icon}</div>
+            <div>
+              <p style={{ fontSize: 11, color: '#8896b0', fontWeight: 600, marginBottom: 4 }}>{card.label}</p>
+              <p style={{ fontSize: 18, fontWeight: 900, color: '#0d1326' }}>{card.value}</p>
             </div>
-            <p className="text-xs text-dark-500 mb-1">{card.label}</p>
-            <p className="text-lg font-bold text-dark-900">{card.value}</p>
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Top Products Chart */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm">
-          <h3 className="font-semibold text-dark-800 mb-4">المنتجات الأكثر طلبا</h3>
+      {/* Charts */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20 }}>
+        {/* Bar chart */}
+        <div style={{ background: '#fff', borderRadius: 20, padding: '24px', border: '1px solid rgba(197,204,224,0.35)', boxShadow: '0 2px 12px rgba(13,19,38,0.04)' }}>
+          <h3 style={{ fontWeight: 800, color: '#0d1326', marginBottom: 6, fontSize: 16 }}>الأكثر طلباً</h3>
+          <p style={{ color: '#8896b0', fontSize: 12, marginBottom: 20 }}>أعلى 5 منتجات مبيعاً</p>
           {topProducts.length > 0 ? (
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={topProducts}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e9ecef" />
-                <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip />
-                <Bar dataKey="count" fill="#5c7cfa" radius={[6, 6, 0, 0]} />
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={topProducts} margin={{ top: 0, right: 0, bottom: 0, left: -20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(197,204,224,0.4)" vertical={false} />
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#8896b0' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: '#8896b0' }} axisLine={false} tickLine={false} />
+                <Tooltip content={<CustomTooltip />} />
+                <Bar dataKey="count" radius={[8,8,0,0]} fill="url(#barGrad)" />
+                <defs>
+                  <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#0284c7" />
+                    <stop offset="100%" stopColor="#38bdf8" />
+                  </linearGradient>
+                </defs>
               </BarChart>
             </ResponsiveContainer>
-          ) : <p className="text-dark-400 text-sm text-center py-8">لا توجد بيانات</p>}
+          ) : <p style={{ color: '#8896b0', textAlign: 'center', padding: '40px 0', fontSize: 14 }}>لا توجد بيانات</p>}
         </div>
 
-        {/* Top Products Pie */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm">
-          <h3 className="font-semibold text-dark-800 mb-4">توزيع المبيعات</h3>
+        {/* Pie chart */}
+        <div style={{ background: '#fff', borderRadius: 20, padding: '24px', border: '1px solid rgba(197,204,224,0.35)', boxShadow: '0 2px 12px rgba(13,19,38,0.04)' }}>
+          <h3 style={{ fontWeight: 800, color: '#0d1326', marginBottom: 6, fontSize: 16 }}>توزيع المبيعات</h3>
+          <p style={{ color: '#8896b0', fontSize: 12, marginBottom: 20 }}>حصة كل منتج من المبيعات</p>
           {topProducts.length > 0 ? (
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie data={topProducts} dataKey="count" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name }) => name}>
-                  {topProducts.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          ) : <p className="text-dark-400 text-sm text-center py-8">لا توجد بيانات</p>}
+            <div>
+              <ResponsiveContainer width="100%" height={180}>
+                <PieChart>
+                  <Pie data={topProducts} dataKey="count" nameKey="name" cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={4}>
+                    {topProducts.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip />} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8, justifyContent: 'center' }}>
+                {topProducts.map((p, i) => (
+                  <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#6272a0' }}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: PIE_COLORS[i % PIE_COLORS.length], display: 'inline-block' }} />
+                    {p.name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : <p style={{ color: '#8896b0', textAlign: 'center', padding: '40px 0', fontSize: 14 }}>لا توجد بيانات</p>}
         </div>
       </div>
 
       {/* Low Stock Alerts */}
       {lowStockProducts.length > 0 && (
-        <div className="bg-white rounded-2xl p-6 shadow-sm border-r-4 border-warning-500">
-          <h3 className="font-semibold text-dark-800 mb-4 flex items-center gap-2">
-            <FiAlertTriangle className="text-warning-500" /> تنبيهات المخزون المنخفض
+        <div style={{ background: '#fff', borderRadius: 20, padding: '24px', border: '1.5px solid rgba(253,203,110,0.5)', boxShadow: '0 2px 12px rgba(13,19,38,0.04)' }}>
+          <h3 style={{ fontWeight: 800, color: '#0d1326', marginBottom: 18, display: 'flex', alignItems: 'center', gap: 8, fontSize: 16 }}>
+            <span style={{ width: 36, height: 36, borderRadius: 10, background: '#fffbeb', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#e17055' }}>
+              <FiAlertTriangle size={17} />
+            </span>
+            تنبيهات المخزون المنخفض
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(200px,1fr))', gap: 12 }}>
             {lowStockProducts.map((p, i) => (
-              <div key={i} className="bg-warning-50 rounded-xl p-3 flex items-center justify-between">
+              <div key={i} style={{ background: '#fffbeb', borderRadius: 14, padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid rgba(253,203,110,0.3)' }}>
                 <div>
-                  <p className="text-sm font-medium text-dark-800">{p.name}</p>
-                  <p className="text-xs text-dark-500">{p.size} / {p.color}</p>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: '#1a2340', marginBottom: 2 }}>{p.name}</p>
+                  <p style={{ fontSize: 11, color: '#8896b0' }}>{p.size} / {p.color}</p>
                 </div>
-                <span className={`text-sm font-bold ${p.qty === 0 ? 'text-danger-600' : 'text-warning-600'}`}>{p.qty}</span>
+                <span style={{ fontSize: 18, fontWeight: 900, color: p.qty === 0 ? '#e74c3c' : '#e17055' }}>{p.qty}</span>
               </div>
             ))}
           </div>

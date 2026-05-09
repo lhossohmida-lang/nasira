@@ -7,8 +7,10 @@ import { seedProducts } from './utils/seedData';
 
 // Layouts
 import Navbar from './components/Navbar';
+import Footer from './components/Footer';
 import AdminLayout from './pages/admin/AdminLayout';
 import AdminRoute from './components/AdminRoute';
+import InstallAppButton from './components/InstallAppButton';
 
 // Customer Pages
 import HomePage from './pages/HomePage';
@@ -18,6 +20,7 @@ import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
 import OrderSuccessPage from './pages/OrderSuccessPage';
 import TrackOrderPage from './pages/TrackOrderPage';
+import DesignPage from './pages/DesignPage';
 
 // Admin Pages
 import AdminLoginPage from './pages/admin/AdminLoginPage';
@@ -31,7 +34,7 @@ import SettingsPage from './pages/admin/SettingsPage';
 
 function CustomerLayout() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col pb-28">
       <Navbar />
       <main className="flex-1">
         <Routes>
@@ -42,8 +45,10 @@ function CustomerLayout() {
           <Route path="checkout" element={<CheckoutPage />} />
           <Route path="order-success" element={<OrderSuccessPage />} />
           <Route path="track-order" element={<TrackOrderPage />} />
+          <Route path="design" element={<DesignPage />} />
         </Routes>
       </main>
+      <Footer />
     </div>
   );
 }
@@ -70,6 +75,7 @@ export default function App() {
               },
             }}
           />
+          <InstallAppButton />
           <Routes>
             {/* Admin Routes */}
             <Route path="/admin/login" element={<AdminLoginPage />} />

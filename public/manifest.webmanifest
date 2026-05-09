@@ -1,0 +1,27 @@
+{
+  "name": "طباعة التيشرتات",
+  "short_name": "تيشرتات",
+  "description": "تطبيق طباعة التيشرتات حسب الطلب.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "dir": "rtl",
+  "lang": "ar",
+  "theme_color": "#38bdf8",
+  "background_color": "#f0f9ff",
+  "icons": [
+    {
+      "src": "/app-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/app-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -18,7 +18,7 @@ export const orderStatuses = [
   { value: 'confirmed', label: 'تم التأكيد', color: 'bg-indigo-100 text-indigo-800' },
   { value: 'printing', label: 'قيد الطباعة', color: 'bg-yellow-100 text-yellow-800' },
   { value: 'ready', label: 'جاهز', color: 'bg-green-100 text-green-800' },
-  { value: 'shipped', label: 'تم الشحن', color: 'bg-purple-100 text-purple-800' },
+  { value: 'shipped', label: 'تم الشحن', color: 'bg-sky-100 text-sky-800' },
   { value: 'delivered', label: 'تم التسليم', color: 'bg-emerald-100 text-emerald-800' },
   { value: 'cancelled', label: 'ملغي', color: 'bg-red-100 text-red-800' },
 ];

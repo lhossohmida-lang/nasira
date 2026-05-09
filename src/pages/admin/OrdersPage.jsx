@@ -81,6 +81,36 @@ export default function OrdersPage() {
     return matchSearch && matchStatus;
   });
 
+  const getDesignEntries = (order) => {
+    const entries = Object.entries(order.customDesigns || {})
+      .map(([sideKey, design]) => ({
+        key: sideKey,
+        label: design.sideLabel || (sideKey === 'front' ? 'أمام' : 'خلف'),
+        original: design.designImageUrl || design.designImageDataUrl || '',
+        preview: design.customizedTshirtUrl || design.customizedTshirtDataUrl || '',
+        scale: design.scale,
+        rotation: design.rotation,
+      }))
+      .filter((entry) => entry.original || entry.preview);
+
+    if (entries.length > 0) return entries;
+
+    if (order.designImageUrl || order.customizedTshirtUrl) {
+      return [{
+        key: 'legacy',
+        label: order.designSide === 'back' ? 'خلف' : 'أمام',
+        original: order.designImageUrl || '',
+        preview: order.customizedTshirtUrl || '',
+        scale: null,
+        rotation: null,
+      }];
+    }
+
+    return [];
+  };
+
+  const selectedDesignEntries = selectedOrder ? getDesignEntries(selectedOrder) : [];
+
   if (loading) return <LoadingSpinner text="جاري التحميل..." />;
 
   return (
@@ -152,7 +182,7 @@ export default function OrdersPage() {
       {/* Order Detail Modal */}
       {selectedOrder && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setSelectedOrder(null)}>
-          <div className="bg-white rounded-2xl p-6 max-w-lg w-full max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+          <div className="bg-white rounded-2xl p-6 max-w-4xl w-full max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold">تفاصيل الطلب {selectedOrder.orderNumber}</h3>
               <button onClick={() => setSelectedOrder(null)} className="p-1 rounded-lg hover:bg-dark-100"><FiX size={20} /></button>
@@ -166,7 +196,79 @@ export default function OrdersPage() {
                 <div className="col-span-2"><span className="text-dark-400">العنوان:</span> <span className="font-medium">{selectedOrder.address}</span></div>
               </div>
               {selectedOrder.note && <div className="bg-dark-50 rounded-xl p-3"><span className="text-dark-400">ملاحظة:</span> {selectedOrder.note}</div>}
-              {(selectedOrder.designImageUrl || selectedOrder.customizedTshirtUrl) && (
+              <div className="rounded-2xl border border-primary-100 bg-primary-50/40 p-4">
+                <p className="text-primary-700 mb-3 font-bold">صورة الزبون والتصميم على التيشرت</p>
+                {selectedDesignEntries.length > 0 ? (
+                  <div className="space-y-5">
+                    {selectedDesignEntries.map((design) => (
+                      <div key={design.key} className="rounded-2xl border border-dark-100 bg-white p-3 shadow-sm">
+                        <div className="mb-3 flex items-center justify-between">
+                          <span className="font-bold text-primary-700">{design.label}</span>
+                          {design.scale !== null && (
+                            <span className="text-[11px] text-dark-400">
+                              الحجم {Math.round((design.scale || 0) * 100)}% · الدوران {design.rotation || 0}°
+                            </span>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-dark-500 text-xs mb-2 font-semibold">الصورة التي اختارها الزبون</p>
+                            {design.original ? (
+                              <img src={design.original} alt={`Design ${design.key}`} className="w-full rounded-xl border border-dark-100 bg-white object-contain max-h-80" />
+                            ) : (
+                              <div className="h-48 rounded-xl border border-dashed border-dark-200 bg-dark-50 flex items-center justify-center text-dark-400">لا توجد صورة أصلية</div>
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-dark-500 text-xs mb-2 font-semibold">التصميم كما يظهر على التيشرت</p>
+                            {design.preview ? (
+                              <img src={design.preview} alt={`Preview ${design.key}`} className="w-full rounded-xl border border-dark-100 bg-white object-contain max-h-80" />
+                            ) : (
+                              <div className="h-48 rounded-xl border border-dashed border-dark-200 bg-dark-50 flex items-center justify-center text-dark-400">لا توجد معاينة</div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-dashed border-dark-200 bg-white p-6 text-center text-dark-400">
+                    لا توجد صور محفوظة لهذا الطلب.
+                  </div>
+                )}
+              </div>
+              {false && selectedOrder.customDesigns && Object.keys(selectedOrder.customDesigns).length > 0 && (
+                <div>
+                  <p className="text-dark-400 mb-2 font-medium">تصميم الزبون حسب الوجه:</p>
+                  <div className="space-y-4">
+                    {Object.entries(selectedOrder.customDesigns).map(([sideKey, design]) => (
+                      <div key={sideKey} className="rounded-2xl border border-dark-100 bg-dark-50/60 p-3">
+                        <div className="mb-2 flex items-center justify-between">
+                          <span className="font-bold text-primary-700">{design.sideLabel || (sideKey === 'front' ? 'أمام' : 'خلف')}</span>
+                          <span className="text-[11px] text-dark-400">
+                            الحجم {Math.round((design.scale || 0) * 100)}% · الدوران {design.rotation || 0}°
+                          </span>
+                        </div>
+                        <div className={`grid gap-3 ${(design.designImageUrl || design.designImageDataUrl) && (design.customizedTshirtUrl || design.customizedTshirtDataUrl) ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                          {(design.designImageUrl || design.designImageDataUrl) && (
+                            <div>
+                              <p className="text-dark-400 text-xs mb-1">الصورة التي اختارها الزبون</p>
+                              <img src={design.designImageUrl || design.designImageDataUrl} alt={`Design ${sideKey}`} className="w-full rounded-xl border border-dark-100 bg-white" />
+                            </div>
+                          )}
+                          {(design.customizedTshirtUrl || design.customizedTshirtDataUrl) && (
+                            <div>
+                              <p className="text-dark-400 text-xs mb-1">الشكل النهائي كما صممه</p>
+                              <img src={design.customizedTshirtUrl || design.customizedTshirtDataUrl} alt={`Preview ${sideKey}`} className="w-full rounded-xl border border-dark-100 bg-white" />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {false && !selectedOrder.customDesigns && (selectedOrder.designImageUrl || selectedOrder.customizedTshirtUrl) && (
                 <div>
                   <p className="text-dark-400 mb-2 font-medium">الصور:</p>
                   <div className={`grid gap-3 ${selectedOrder.designImageUrl && selectedOrder.customizedTshirtUrl ? 'grid-cols-2' : 'grid-cols-1'}`}>
