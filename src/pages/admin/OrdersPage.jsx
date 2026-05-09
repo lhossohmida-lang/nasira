@@ -166,8 +166,24 @@ export default function OrdersPage() {
                 <div className="col-span-2"><span className="text-dark-400">العنوان:</span> <span className="font-medium">{selectedOrder.address}</span></div>
               </div>
               {selectedOrder.note && <div className="bg-dark-50 rounded-xl p-3"><span className="text-dark-400">ملاحظة:</span> {selectedOrder.note}</div>}
-              {selectedOrder.designImageUrl && (
-                <div><p className="text-dark-400 mb-1">التصميم:</p><img src={selectedOrder.designImageUrl} alt="Design" className="w-full max-w-[200px] rounded-xl" /></div>
+              {(selectedOrder.designImageUrl || selectedOrder.customizedTshirtUrl) && (
+                <div>
+                  <p className="text-dark-400 mb-2 font-medium">الصور:</p>
+                  <div className={`grid gap-3 ${selectedOrder.designImageUrl && selectedOrder.customizedTshirtUrl ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                    {selectedOrder.designImageUrl && (
+                      <div>
+                        <p className="text-dark-400 text-xs mb-1">التصميم الأصلي</p>
+                        <img src={selectedOrder.designImageUrl} alt="Design" className="w-full rounded-xl border border-dark-100" />
+                      </div>
+                    )}
+                    {selectedOrder.customizedTshirtUrl && (
+                      <div>
+                        <p className="text-dark-400 text-xs mb-1">معاينة التيشيرت</p>
+                        <img src={selectedOrder.customizedTshirtUrl} alt="Preview" className="w-full rounded-xl border border-dark-100" />
+                      </div>
+                    )}
+                  </div>
+                </div>
               )}
               <div className="border-t border-dark-200 pt-3">
                 <h4 className="font-semibold mb-2">المنتجات</h4>

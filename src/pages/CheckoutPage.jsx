@@ -28,13 +28,26 @@ export default function CheckoutPage() {
     try {
       const orderNumber = generateOrderNumber();
       let designImageUrl = '';
+      let customizedTshirtUrl = '';
 
-      // Upload design image if exists
-      const itemWithDesign = cartItems.find(i => i.designFile);
-      if (itemWithDesign?.designFile) {
-        const fileRef = ref(storage, `designs/${orderNumber}_${Date.now()}`);
-        await uploadBytes(fileRef, itemWithDesign.designFile);
-        designImageUrl = await getDownloadURL(fileRef);
+      const itemWithDesign = cartItems.find(i => i.designPreview || i.compositePreview || i.designFile);
+      if (itemWithDesign) {
+        if (itemWithDesign.designPreview) {
+          const blob = await fetch(itemWithDesign.designPreview).then(r => r.blob());
+          const fileRef = ref(storage, `designs/original_${orderNumber}_${Date.now()}`);
+          await uploadBytes(fileRef, blob);
+          designImageUrl = await getDownloadURL(fileRef);
+        } else if (itemWithDesign.designFile) {
+          const fileRef = ref(storage, `designs/${orderNumber}_${Date.now()}`);
+          await uploadBytes(fileRef, itemWithDesign.designFile);
+          designImageUrl = await getDownloadURL(fileRef);
+        }
+        if (itemWithDesign.compositePreview) {
+          const blob = await fetch(itemWithDesign.compositePreview).then(r => r.blob());
+          const fileRef = ref(storage, `designs/preview_${orderNumber}_${Date.now()}`);
+          await uploadBytes(fileRef, blob);
+          customizedTshirtUrl = await getDownloadURL(fileRef);
+        }
       }
 
       const items = cartItems.map(i => ({
@@ -52,7 +65,7 @@ export default function CheckoutPage() {
         wilaya: form.wilaya, commune: form.commune, address: form.address,
         items, totalPrice, totalCost, deliveryCost: 0, extraCost: 0,
         netProfit: totalPrice - totalCost,
-        status: 'new', note: form.note, designImageUrl,
+        status: 'new', note: form.note, designImageUrl, customizedTshirtUrl,
         createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
       };
 
