@@ -210,14 +210,29 @@ export default function InvoiceModal({ order, orders, onClose }) {
     setDownloading(true);
     try {
       const el = allInvoicesRef.current;
+      el.style.position = 'fixed';
+      el.style.left = '0';
+      el.style.top = '0';
+      el.style.zIndex = '9999';
+      el.style.overflow = 'visible';
+      el.style.opacity = '0';
+      el.style.pointerEvents = 'none';
+
+      await new Promise(r => setTimeout(r, 300));
+
       await html2pdf().set({
         margin: 0,
         filename: `فواتير_${allOrders.length}_طلبات.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+        html2canvas: { scale: 2, useCORS: true, logging: false },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
         pagebreak: { mode: ['css'], before: '.invoice-page-break' },
       }).from(el).save();
+
+      el.style.position = 'absolute';
+      el.style.left = '-9999px';
+      el.style.opacity = '1';
+      el.style.zIndex = 'auto';
     } catch (e) { console.error(e); }
     finally { setDownloading(false); }
   };

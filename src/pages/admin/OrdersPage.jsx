@@ -287,7 +287,7 @@ export default function OrdersPage() {
           </div>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm" style={{ minWidth: '900px' }}>
             <thead>
               <tr className="border-b border-dark-100 bg-dark-50/60">
                 <th className="px-4 py-4 text-center w-12">
@@ -310,12 +310,10 @@ export default function OrdersPage() {
                 const isSelected = selectedIds.has(order.id);
                 return (
                   <tr key={order.id} className={`border-b border-dark-50 hover:bg-primary-50/30 transition-colors ${isSelected ? 'bg-primary-50/50' : ''}`}>
-                    {/* Checkbox */}
                     <td className="px-4 py-5 text-center">
                       <input type="checkbox" checked={isSelected} onChange={() => toggleSelect(order.id)}
                         className="w-4 h-4 rounded border-dark-300 text-primary-600 focus:ring-primary-500 cursor-pointer accent-primary-600" />
                     </td>
-                    {/* Order Number */}
                     <td className="px-4 py-5">
                       <div className="flex items-center gap-2">
                         <span className="font-black text-primary-600 text-[13px]">#{order.orderNumber}</span>
@@ -324,7 +322,6 @@ export default function OrdersPage() {
                         </button>
                       </div>
                     </td>
-                    {/* Customer */}
                     <td className="px-4 py-5">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-full bg-dark-100 flex items-center justify-center flex-shrink-0">
@@ -336,7 +333,6 @@ export default function OrdersPage() {
                         </div>
                       </div>
                     </td>
-                    {/* Phone */}
                     <td className="px-4 py-5">
                       <div className="flex items-center gap-2">
                         <a href={`tel:${order.phone}`} className="w-7 h-7 rounded-full bg-primary-50 flex items-center justify-center hover:bg-primary-100 transition-colors">
@@ -345,27 +341,22 @@ export default function OrdersPage() {
                         <span className="font-semibold text-dark-700 text-[13px] font-mono">{order.phone}</span>
                       </div>
                     </td>
-                    {/* Amount */}
                     <td className="px-4 py-5">
                       <p className="font-bold text-dark-900 text-[13px]">{formatPrice(order.totalPrice)}</p>
                       <p className="text-[11px] text-dark-400 mt-0.5">الدفع عند الاستلام</p>
                     </td>
-                    {/* Profit */}
                     <td className="px-4 py-5">
                       <p className="font-bold text-emerald-600 text-[13px]">{formatPrice(order.netProfit || 0)}</p>
                     </td>
-                    {/* Status */}
                     <td className="px-4 py-5">
                       <select value={order.status} onChange={e => handleStatusChange(order.id, e.target.value)}
                         className={`text-xs px-3 py-1.5 rounded-full font-bold border-0 cursor-pointer ${getStatusInfo(order.status).color}`}>
                         {orderStatuses.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
                       </select>
                     </td>
-                    {/* Date */}
                     <td className="px-4 py-5">
                       <p className="text-dark-600 text-xs font-semibold">{formatDate(order.createdAt)}</p>
                     </td>
-                    {/* Actions */}
                     <td className="px-4 py-5">
                       <div className="flex items-center justify-center gap-0.5">
                         <button onClick={() => setSelectedOrder(order)} className="p-2 rounded-lg hover:bg-primary-50 text-dark-400 hover:text-primary-600 transition-colors" title="عرض التفاصيل">
@@ -387,17 +378,14 @@ export default function OrdersPage() {
           {filtered.length === 0 && <p className="text-center text-dark-400 py-12 font-semibold">لا توجد طلبات</p>}
         </div>
 
-        {/* ===== PAGINATION ===== */}
+        {/* PAGINATION */}
         {filtered.length > 0 && (
-          <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-t border-dark-100 gap-3">
-            <div className="text-xs text-dark-400 font-semibold">
-              عرض {(currentPage - 1) * perPage + 1} – {Math.min(currentPage * perPage, filtered.length)} من {filtered.length} طلب
-            </div>
+          <div className="flex items-center justify-between px-6 py-4 border-t border-dark-100">
+            <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
+              className="px-4 py-2 rounded-lg border border-dark-200 hover:bg-dark-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-xs font-bold text-dark-600">
+              السابق
+            </button>
             <div className="flex items-center gap-2">
-              <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
-                className="p-2 rounded-lg border border-dark-200 hover:bg-dark-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
-                <FiChevronRight size={16} />
-              </button>
               {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
                 let page;
                 if (totalPages <= 5) { page = i + 1; }
@@ -411,19 +399,12 @@ export default function OrdersPage() {
                   </button>
                 );
               })}
-              <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
-                className="p-2 rounded-lg border border-dark-200 hover:bg-dark-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
-                <FiChevronLeft size={16} />
-              </button>
+              <span className="text-xs text-dark-500 font-bold mr-2">{currentPage} من {totalPages}</span>
             </div>
-            <div className="flex items-center gap-2 text-xs text-dark-400 font-semibold">
-              <span>عرض</span>
-              <select value={perPage} onChange={e => setPerPage(Number(e.target.value))}
-                className="px-2 py-1 border border-dark-200 rounded-lg bg-white focus:outline-none cursor-pointer font-bold text-dark-600">
-                {ITEMS_PER_PAGE_OPTIONS.map(n => <option key={n} value={n}>{n}</option>)}
-              </select>
-              <span>طلبات في الصفحة</span>
-            </div>
+            <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
+              className="px-4 py-2 rounded-lg border border-dark-200 hover:bg-dark-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-xs font-bold text-dark-600">
+              التالي
+            </button>
           </div>
         )}
       </div>
