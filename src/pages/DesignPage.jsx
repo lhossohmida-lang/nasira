@@ -10,7 +10,8 @@ import { wilayas, generateOrderNumber, tshirtSizes } from '../utils/constants';
 
 const CANVAS_W = 600;
 const CANVAS_H = 600;
-const TSHIRT_TEMPLATE_SRC = '/tshirt-template.webp';
+const TSHIRT_TEMPLATE_FRONT_SRC = '/tshirt-front.jpg';
+const TSHIRT_TEMPLATE_BACK_SRC = '/tshirt-back.jpg';
 const SINGLE_SIDE_PRICE = 3500;
 const DOUBLE_SIDE_PRICE = 4500;
 
@@ -50,7 +51,7 @@ export default function DesignPage() {
   const [removingBg, setRemovingBg] = useState(false);
   const [removingProgress, setRemovingProgress] = useState(0);
   const [tshirtColor] = useState(TSHIRT_COLORS[0]);
-  const [tshirtTemplate, setTshirtTemplate] = useState(null);
+  const [tshirtTemplates, setTshirtTemplates] = useState({ front: null, back: null });
   const [side, setSide] = useState('front');
   const [showOrderForm, setShowOrderForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -87,9 +88,13 @@ export default function DesignPage() {
   const orderTotal = productPrice + deliveryCost;
 
   useEffect(() => {
-    const img = new Image();
-    img.onload = () => setTshirtTemplate(img);
-    img.src = TSHIRT_TEMPLATE_SRC;
+    const frontImg = new Image();
+    frontImg.onload = () => setTshirtTemplates(prev => ({ ...prev, front: frontImg }));
+    frontImg.src = TSHIRT_TEMPLATE_FRONT_SRC;
+
+    const backImg = new Image();
+    backImg.onload = () => setTshirtTemplates(prev => ({ ...prev, back: backImg }));
+    backImg.src = TSHIRT_TEMPLATE_BACK_SRC;
   }, []);
 
   useEffect(() => {
@@ -130,22 +135,23 @@ export default function DesignPage() {
   const drawTshirt = useCallback((ctx, tshirtSide = side) => {
     const w = CANVAS_W;
     const h = CANVAS_H;
+    const template = tshirtTemplates[tshirtSide];
 
-    if (tshirtTemplate) {
+    if (template) {
       ctx.save();
       ctx.fillStyle = '#f8fafc';
       ctx.fillRect(0, 0, w, h);
 
-      const scale = Math.min((w * 0.94) / tshirtTemplate.naturalWidth, (h * 0.94) / tshirtTemplate.naturalHeight);
-      const dw = tshirtTemplate.naturalWidth * scale;
-      const dh = tshirtTemplate.naturalHeight * scale;
+      const scale = Math.min((w * 0.94) / template.naturalWidth, (h * 0.94) / template.naturalHeight);
+      const dw = template.naturalWidth * scale;
+      const dh = template.naturalHeight * scale;
       const dx = (w - dw) / 2;
       const dy = (h - dh) / 2;
 
       ctx.shadowColor = 'rgba(15, 23, 42, 0.12)';
       ctx.shadowBlur = 18;
       ctx.shadowOffsetY = 10;
-      ctx.drawImage(tshirtTemplate, dx, dy, dw, dh);
+      ctx.drawImage(template, dx, dy, dw, dh);
       ctx.shadowColor = 'transparent';
 
       ctx.restore();
@@ -241,7 +247,7 @@ export default function DesignPage() {
     ctx.fill();
 
     ctx.restore();
-  }, [tshirtColor, side, tshirtTemplate]);
+  }, [tshirtColor, side, tshirtTemplates]);
 
   // Main draw
   const draw = useCallback(() => {
@@ -743,7 +749,7 @@ export default function DesignPage() {
 
             {/* Upload + Toggle + Remove buttons */}
             <div className="flex gap-3 animate-fade-in-up stagger-2" style={{ opacity: 0 }}>
-              <label className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-2xl cursor-pointer hover:from-primary-600 hover:to-primary-700 transition-all shadow-lg shadow-primary-500/20 font-semibold text-sm ${removingBg ? 'opacity-50 pointer-events-none' : ''}`}>
+              <label className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-full cursor-pointer hover:from-primary-600 hover:to-primary-700 transition-all shadow-lg shadow-primary-500/20 font-semibold text-sm ${removingBg ? 'opacity-50 pointer-events-none' : ''}`}>
                 <FiUpload size={18} />
                 {designImg ? 'تغيير الصورة' : 'رفع صورة التصميم'}
                 <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFile} className="hidden" disabled={removingBg} />
@@ -751,7 +757,7 @@ export default function DesignPage() {
               {designImg && (
                 <>
                   <button onClick={toggleBackground} disabled={removingBg || !originalDataUrl}
-                    className={`px-4 py-4 rounded-2xl transition-colors border text-sm font-medium ${
+                    className={`px-4 py-4 rounded-full transition-colors border text-sm font-medium ${
                       bgRemoved
                         ? 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100'
                         : 'bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100'
@@ -760,12 +766,12 @@ export default function DesignPage() {
                     <FiLayers size={18} />
                   </button>
                   <button onClick={centerDesign}
-                    className="px-4 py-4 bg-primary-50 text-primary-600 rounded-2xl hover:bg-primary-100 transition-colors border border-primary-200"
+                    className="px-4 py-4 bg-primary-50 text-primary-600 rounded-full hover:bg-primary-100 transition-colors border border-primary-200"
                     title="توسيط">
                     <FiMaximize2 size={18} />
                   </button>
                   <button onClick={removeDesign}
-                    className="px-4 py-4 bg-red-50 text-red-500 rounded-2xl hover:bg-red-100 transition-colors border border-red-200"
+                    className="px-4 py-4 bg-red-50 text-red-500 rounded-full hover:bg-red-100 transition-colors border border-red-200"
                     title="حذف">
                     <FiX size={18} />
                   </button>
@@ -800,11 +806,11 @@ export default function DesignPage() {
               </h3>
               <div className="grid grid-cols-2 gap-2">
                 <button onClick={() => setSide('front')}
-                  className={`py-3 rounded-xl text-sm font-semibold transition-all ${side === 'front' ? 'bg-primary-500 text-white shadow-lg' : 'bg-dark-50 text-dark-500 hover:bg-dark-100'}`}>
+                  className={`py-3 rounded-full text-sm font-semibold transition-all ${side === 'front' ? 'bg-primary-500 text-white shadow-lg' : 'bg-dark-50 text-dark-500 hover:bg-dark-100'}`}>
                   أمام 👕
                 </button>
                 <button onClick={() => setSide('back')}
-                  className={`py-3 rounded-xl text-sm font-semibold transition-all ${side === 'back' ? 'bg-primary-500 text-white shadow-lg' : 'bg-dark-50 text-dark-500 hover:bg-dark-100'}`}>
+                  className={`py-3 rounded-full text-sm font-semibold transition-all ${side === 'back' ? 'bg-primary-500 text-white shadow-lg' : 'bg-dark-50 text-dark-500 hover:bg-dark-100'}`}>
                   خلف 🔄
                 </button>
               </div>
@@ -859,11 +865,11 @@ export default function DesignPage() {
                 {/* Quick actions */}
                 <div className="flex gap-2">
                   <button onClick={() => setRotation(0)}
-                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-dark-50 text-dark-600 rounded-xl hover:bg-dark-100 transition-colors text-xs font-medium">
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-dark-50 text-dark-600 rounded-full hover:bg-dark-100 transition-colors text-xs font-medium">
                     <FiRefreshCw size={12} /> إعادة الدوران
                   </button>
                   <button onClick={centerDesign}
-                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-dark-50 text-dark-600 rounded-xl hover:bg-dark-100 transition-colors text-xs font-medium">
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-dark-50 text-dark-600 rounded-full hover:bg-dark-100 transition-colors text-xs font-medium">
                     <FiMaximize2 size={12} /> توسيط
                   </button>
                 </div>
@@ -880,7 +886,7 @@ export default function DesignPage() {
             <button
               onClick={handleProceed}
               disabled={!hasAnyDesign}
-              className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-primary-500 via-accent-500 to-primary-500 animate-gradient-shift text-white py-4 rounded-2xl font-bold text-base hover:opacity-90 transition-all shadow-2xl shadow-primary-500/20 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-primary-500 via-accent-500 to-primary-500 animate-gradient-shift text-white py-4 rounded-full font-bold text-base hover:opacity-90 transition-all shadow-2xl shadow-primary-500/20 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <FiSend size={20} />
               إرسال الطلب
@@ -990,18 +996,18 @@ export default function DesignPage() {
               <div className="flex gap-2">
                 {orderStep > 1 && (
                   <button type="button" onClick={() => setOrderStep((step) => Math.max(step - 1, 1))}
-                    className="px-5 py-3 rounded-xl bg-dark-100 text-dark-600 font-semibold hover:bg-dark-200 transition-colors">
+                    className="px-5 py-3 rounded-full bg-dark-100 text-dark-600 font-semibold hover:bg-dark-200 transition-colors">
                     رجوع
                   </button>
                 )}
                 {orderStep < 3 ? (
                   <button type="button" onClick={handleNextOrderStep}
-                    className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-primary-600 to-primary-700 text-white py-3 rounded-xl font-semibold hover:from-primary-700 hover:to-primary-800 shadow-lg shadow-primary-600/20">
+                    className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-primary-600 to-primary-700 text-white py-3 rounded-full font-semibold hover:from-primary-700 hover:to-primary-800 shadow-lg shadow-primary-600/20">
                     التالي
                   </button>
                 ) : (
                   <button type="submit" disabled={submitting}
-                    className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-primary-600 to-primary-700 text-white py-3 rounded-xl font-semibold hover:from-primary-700 hover:to-primary-800 disabled:opacity-50 shadow-lg shadow-primary-600/20">
+                    className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-primary-600 to-primary-700 text-white py-3 rounded-full font-semibold hover:from-primary-700 hover:to-primary-800 disabled:opacity-50 shadow-lg shadow-primary-600/20">
                     {submitting ? <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> جاري الإرسال...</> : <><FiSend size={18} /> تأكيد وإرسال الطلب</>}
                   </button>
                 )}
