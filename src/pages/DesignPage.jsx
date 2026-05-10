@@ -748,32 +748,31 @@ export default function DesignPage() {
             </div>
 
             {/* Upload + Toggle + Remove buttons */}
-            <div className="flex gap-3 animate-fade-in-up stagger-2" style={{ opacity: 0 }}>
-              <label className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-full cursor-pointer hover:from-primary-600 hover:to-primary-700 transition-all shadow-lg shadow-primary-500/20 font-semibold text-sm ${removingBg ? 'opacity-50 pointer-events-none' : ''}`}>
-                <FiUpload size={18} />
-                {designImg ? 'تغيير الصورة' : 'رفع صورة التصميم'}
+            <div className="flex flex-wrap justify-center gap-4 animate-fade-in-up stagger-2" style={{ opacity: 0 }}>
+              <label className={`w-12 h-12 shrink-0 flex items-center justify-center bg-[#0ea5e9] text-white rounded-full cursor-pointer hover:bg-sky-600 transition-all shadow-md ${removingBg ? 'opacity-50 pointer-events-none' : ''}`} title={designImg ? 'تغيير الصورة' : 'رفع صورة التصميم'}>
+                <FiUpload size={20} />
                 <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFile} className="hidden" disabled={removingBg} />
               </label>
               {designImg && (
                 <>
                   <button onClick={toggleBackground} disabled={removingBg || !originalDataUrl}
-                    className={`px-4 py-4 rounded-full transition-colors border text-sm font-medium ${
+                    className={`w-12 h-12 shrink-0 flex items-center justify-center rounded-full transition-colors border ${
                       bgRemoved
                         ? 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100'
                         : 'bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100'
                     } disabled:opacity-50`}
                     title={bgRemoved ? 'إظهار الخلفية الأصلية' : 'إزالة الخلفية'}>
-                    <FiLayers size={18} />
+                    <FiLayers size={20} />
                   </button>
                   <button onClick={centerDesign}
-                    className="px-4 py-4 bg-primary-50 text-primary-600 rounded-full hover:bg-primary-100 transition-colors border border-primary-200"
+                    className="w-12 h-12 shrink-0 flex items-center justify-center bg-primary-50 text-primary-600 rounded-full hover:bg-primary-100 transition-colors border border-primary-200"
                     title="توسيط">
-                    <FiMaximize2 size={18} />
+                    <FiMaximize2 size={20} />
                   </button>
                   <button onClick={removeDesign}
-                    className="px-4 py-4 bg-red-50 text-red-500 rounded-full hover:bg-red-100 transition-colors border border-red-200"
+                    className="w-12 h-12 shrink-0 flex items-center justify-center bg-red-50 text-red-500 rounded-full hover:bg-red-100 transition-colors border border-red-200"
                     title="حذف">
-                    <FiX size={18} />
+                    <FiX size={20} />
                   </button>
                 </>
               )}
@@ -800,18 +799,18 @@ export default function DesignPage() {
           <div className="space-y-5 animate-fade-in-up stagger-3" style={{ opacity: 0 }}>
             {/* Front/Back Toggle */}
             <div className="bg-white rounded-3xl shadow-premium p-5">
-              <h3 className="font-bold text-dark-800 text-base mb-3 flex items-center gap-2">
-                <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white text-xs"><FiRepeat size={14} /></span>
+              <h3 className="font-bold text-dark-800 text-lg mb-4 flex items-center gap-2">
+                <span className="w-8 h-8 rounded-full bg-[#0ea5e9] flex items-center justify-center text-white"><FiRepeat size={14} /></span>
                 الوجه
               </h3>
-              <div className="grid grid-cols-2 gap-2">
-                <button onClick={() => setSide('front')}
-                  className={`py-3 rounded-full text-sm font-semibold transition-all ${side === 'front' ? 'bg-primary-500 text-white shadow-lg' : 'bg-dark-50 text-dark-500 hover:bg-dark-100'}`}>
-                  أمام 👕
+              <div className="flex justify-center gap-6 p-2">
+                <button onClick={() => setSide('front')} title="أمام"
+                  className={`w-12 h-12 flex items-center justify-center rounded-full transition-all ${side === 'front' ? 'bg-[#0ea5e9] text-white shadow-lg scale-110' : 'bg-sky-50 text-[#0ea5e9] hover:bg-sky-100'}`}>
+                  <span className="text-2xl">👕</span>
                 </button>
-                <button onClick={() => setSide('back')}
-                  className={`py-3 rounded-full text-sm font-semibold transition-all ${side === 'back' ? 'bg-primary-500 text-white shadow-lg' : 'bg-dark-50 text-dark-500 hover:bg-dark-100'}`}>
-                  خلف 🔄
+                <button onClick={() => setSide('back')} title="خلف"
+                  className={`w-12 h-12 flex items-center justify-center rounded-full transition-all ${side === 'back' ? 'bg-[#0ea5e9] text-white shadow-lg scale-110' : 'bg-sky-50 text-[#0ea5e9] hover:bg-sky-100'}`}>
+                  <FiRefreshCw size={20} />
                 </button>
               </div>
               <p className="mt-3 text-xs text-dark-400 leading-relaxed">
@@ -883,14 +882,16 @@ export default function DesignPage() {
             )}
 
             {/* Proceed / Order button */}
-            <button
-              onClick={handleProceed}
-              disabled={!hasAnyDesign}
-              className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-primary-500 via-accent-500 to-primary-500 animate-gradient-shift text-white py-4 rounded-full font-bold text-base hover:opacity-90 transition-all shadow-2xl shadow-primary-500/20 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <FiSend size={20} />
-              إرسال الطلب
-            </button>
+            <div className="flex justify-center mt-6">
+              <button
+                onClick={handleProceed}
+                disabled={!hasAnyDesign}
+                title="إرسال الطلب"
+                className="w-12 h-12 flex items-center justify-center bg-[#0ea5e9] text-white rounded-full hover:bg-sky-600 transition-all shadow-xl disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
+              >
+                <FiSend size={20} className="-ml-1" />
+              </button>
+            </div>
 
             {!designImg && (
               <div className="bg-gradient-to-br from-dark-50 to-white rounded-3xl shadow-premium p-6 text-center space-y-3">
@@ -911,104 +912,114 @@ export default function DesignPage() {
 
       {/* Order Form Modal */}
       {showOrderForm && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowOrderForm(false)}>
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-6 space-y-5 animate-scale-in" dir="rtl" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowOrderForm(false)}>
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-6 space-y-6 animate-scale-in" dir="rtl" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold text-dark-900 flex items-center gap-2"><FiShoppingBag /> إتمام الطلب</h2>
-              <button onClick={() => setShowOrderForm(false)} className="p-2 rounded-xl hover:bg-dark-100 text-dark-400"><FiX size={20} /></button>
+              <h2 className="text-2xl font-extrabold text-[#0ea5e9] flex items-center gap-2"><FiShoppingBag /> إتمام الطلب</h2>
+              <button onClick={() => setShowOrderForm(false)} className="text-[#0ea5e9] hover:bg-sky-50 p-2 rounded-full transition-colors"><FiX size={24} /></button>
             </div>
 
-            <form onSubmit={handleSubmitOrder} className="space-y-5">
-              <div className="grid grid-cols-3 gap-2 text-center text-xs font-semibold">
+            <form onSubmit={handleSubmitOrder} className="space-y-6">
+              <div className="flex rounded-full bg-sky-50 p-1 gap-1 text-center text-sm font-bold text-[#0ea5e9]">
                 {[1, 2, 3].map((stepNumber) => (
-                  <div key={stepNumber} className={`rounded-2xl py-2 ${orderStep === stepNumber ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/20' : 'bg-dark-50 text-dark-400'}`}>
+                  <div key={stepNumber} className={`flex-1 rounded-full py-2.5 transition-all ${orderStep === stepNumber ? 'bg-[#0ea5e9] text-white shadow-md' : 'hover:bg-sky-100'}`}>
                     {stepNumber === 1 ? 'المعلومات' : stepNumber === 2 ? 'الهاتف' : 'الفاتورة'}
                   </div>
                 ))}
               </div>
 
               {orderStep === 1 && (
-                <div className="space-y-4 animate-fade-in-up">
-                  <div className="rounded-2xl bg-primary-50 border border-primary-100 p-4 text-sm text-primary-700 leading-relaxed">
+                <div className="space-y-5 animate-fade-in-up">
+                  <div className="text-sm text-[#0ea5e9] font-bold text-center">
                     اختر المقاس والولاية أولا حتى نحسب سعر التوصيل في الفاتورة.
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-dark-600 mb-1">الاسم الكامل *</label>
+                      <label className="block text-sm font-bold text-[#0ea5e9] mb-2">الاسم الكامل *</label>
                       <input name="customerName" value={form.customerName} onChange={e => setForm(p => ({...p, customerName: e.target.value}))} required
-                        placeholder="اكتب اسمك" className="w-full px-4 py-3 border border-dark-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20" />
+                        placeholder="اكتب اسمك" className="w-full px-5 py-3 border border-sky-200 rounded-full text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0ea5e9]/30 text-dark-800" />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-dark-600 mb-1">المقاس</label>
+                      <label className="block text-sm font-bold text-[#0ea5e9] mb-2">المقاس</label>
                       <select value={selectedSize} onChange={e => setSelectedSize(e.target.value)}
-                        className="w-full px-4 py-3 border border-dark-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20">
+                        className="w-full px-5 py-3 border border-sky-200 rounded-full text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0ea5e9]/30 text-dark-800 appearance-none bg-white">
                         {tshirtSizes.map(s => <option key={s} value={s}>{s}</option>)}
                       </select>
                     </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-dark-600 mb-1">الولاية *</label>
-                    <select name="wilaya" value={form.wilaya} onChange={e => setForm(p => ({...p, wilaya: e.target.value}))} required
-                      className="w-full px-4 py-3 border border-dark-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20">
-                      <option value="">اختر الولاية</option>
-                      {wilayas.map(w => <option key={w} value={w}>{w}</option>)}
-                    </select>
+                    <div>
+                      <label className="block text-sm font-bold text-[#0ea5e9] mb-2">الولاية *</label>
+                      <select name="wilaya" value={form.wilaya} onChange={e => setForm(p => ({...p, wilaya: e.target.value}))} required
+                        className="w-full px-5 py-3 border border-sky-200 rounded-full text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0ea5e9]/30 text-dark-800 appearance-none bg-white">
+                        <option value="">اختر الولاية</option>
+                        {wilayas.map(w => <option key={w} value={w}>{w}</option>)}
+                      </select>
+                    </div>
                   </div>
                 </div>
               )}
 
               {orderStep === 2 && (
-                <div className="space-y-4 animate-fade-in-up">
-                  <h3 className="font-semibold text-dark-700 flex items-center gap-2 text-sm"><FiPhone size={14} /> معلومات التواصل</h3>
-                  <input name="phone" value={form.phone} onChange={e => setForm(p => ({...p, phone: e.target.value}))} required type="tel"
-                    placeholder="رقم الهاتف *" className="w-full px-4 py-3 border border-dark-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20" />
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <input name="commune" value={form.commune} onChange={e => setForm(p => ({...p, commune: e.target.value}))}
-                      placeholder="البلدية (اختياري)" className="w-full px-4 py-3 border border-dark-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20" />
-                    <input name="address" value={form.address} onChange={e => setForm(p => ({...p, address: e.target.value}))}
-                      placeholder="العنوان (اختياري)" className="w-full px-4 py-3 border border-dark-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20" />
+                <div className="space-y-5 animate-fade-in-up">
+                  <h3 className="font-extrabold text-[#0ea5e9] flex items-center gap-2 text-lg"><FiPhone size={20} /> معلومات التواصل</h3>
+                  <div>
+                    <label className="block text-sm font-bold text-[#0ea5e9] mb-2">رقم الهاتف *</label>
+                    <input name="phone" value={form.phone} onChange={e => setForm(p => ({...p, phone: e.target.value}))} required type="tel"
+                      placeholder="رقم الهاتف" className="w-full px-5 py-3 border border-sky-200 rounded-full text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0ea5e9]/30 text-dark-800" />
                   </div>
-                  <textarea name="note" value={form.note} onChange={e => setForm(p => ({...p, note: e.target.value}))} rows={3}
-                    placeholder="ملاحظة للطلب (اختياري)" className="w-full px-4 py-3 border border-dark-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 resize-none" />
+                  <div>
+                    <label className="block text-sm font-bold text-[#0ea5e9] mb-2">البلدية (اختياري)</label>
+                    <input name="commune" value={form.commune} onChange={e => setForm(p => ({...p, commune: e.target.value}))}
+                      placeholder="البلدية" className="w-full px-5 py-3 border border-sky-200 rounded-full text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0ea5e9]/30 text-dark-800" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-[#0ea5e9] mb-2">العنوان (اختياري)</label>
+                    <input name="address" value={form.address} onChange={e => setForm(p => ({...p, address: e.target.value}))}
+                      placeholder="العنوان بالتفصيل" className="w-full px-5 py-3 border border-sky-200 rounded-full text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0ea5e9]/30 text-dark-800" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-[#0ea5e9] mb-2">ملاحظة للطلب (اختياري)</label>
+                    <textarea name="note" value={form.note} onChange={e => setForm(p => ({...p, note: e.target.value}))} rows={3}
+                      placeholder="أي تفاصيل إضافية..." className="w-full px-5 py-3 border border-sky-200 rounded-3xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0ea5e9]/30 text-dark-800 resize-none" />
+                  </div>
                 </div>
               )}
 
               {orderStep === 3 && (
-                <div className="space-y-4 animate-fade-in-up">
-                  <div className="bg-dark-50 rounded-2xl p-4 text-sm space-y-3">
-                    <div className="flex justify-between"><span className="text-dark-500">الاسم</span><span className="font-semibold text-dark-800">{form.customerName}</span></div>
-                    <div className="flex justify-between"><span className="text-dark-500">الولاية</span><span className="font-semibold text-dark-800">{form.wilaya}</span></div>
-                    <div className="flex justify-between"><span className="text-dark-500">المقاس</span><span className="font-semibold text-dark-800">{selectedSize}</span></div>
-                    <div className="flex justify-between"><span className="text-dark-500">الوجه</span><span className="font-semibold text-dark-800">{designedSideLabels || 'لم يتم اختيار وجه'}</span></div>
+                <div className="space-y-5 animate-fade-in-up">
+                  <div className="bg-sky-50 rounded-3xl p-5 text-sm space-y-3 border border-sky-100">
+                    <div className="flex justify-between"><span className="text-[#0ea5e9] font-bold">الاسم</span><span className="font-extrabold text-dark-800">{form.customerName}</span></div>
+                    <div className="flex justify-between"><span className="text-[#0ea5e9] font-bold">الولاية</span><span className="font-extrabold text-dark-800">{form.wilaya}</span></div>
+                    <div className="flex justify-between"><span className="text-[#0ea5e9] font-bold">المقاس</span><span className="font-extrabold text-dark-800">{selectedSize}</span></div>
+                    <div className="flex justify-between"><span className="text-[#0ea5e9] font-bold">الوجه</span><span className="font-extrabold text-dark-800">{designedSideLabels || 'لم يتم اختيار وجه'}</span></div>
                   </div>
 
-                  <div className="rounded-2xl border border-primary-100 overflow-hidden">
-                    <div className="bg-primary-600 text-white px-4 py-3 font-bold">الفاتورة</div>
-                    <div className="p-4 text-sm space-y-3">
-                      <div className="flex justify-between"><span className="text-dark-500">سعر التيشرت</span><span className="font-bold">{productPrice.toLocaleString('fr-DZ')} دج</span></div>
-                      <div className="flex justify-between"><span className="text-dark-500">حقوق التوصيل</span><span className="font-bold">{deliveryCost.toLocaleString('fr-DZ')} دج</span></div>
-                      <div className="border-t border-dark-100 pt-3 flex justify-between text-base"><span className="font-bold text-dark-800">الإجمالي</span><span className="font-extrabold text-primary-700">{orderTotal.toLocaleString('fr-DZ')} دج</span></div>
+                  <div className="rounded-3xl border border-[#0ea5e9] overflow-hidden shadow-sm">
+                    <div className="bg-[#0ea5e9] text-white px-5 py-3 font-extrabold text-center text-lg">الفاتورة</div>
+                    <div className="p-5 text-sm space-y-4 bg-white">
+                      <div className="flex justify-between items-center"><span className="text-[#0ea5e9] font-bold text-base">سعر التيشرت</span><span className="font-bold text-lg text-dark-800">{productPrice.toLocaleString('fr-DZ')} دج</span></div>
+                      <div className="flex justify-between items-center"><span className="text-[#0ea5e9] font-bold text-base">حقوق التوصيل</span><span className="font-bold text-lg text-dark-800">{deliveryCost.toLocaleString('fr-DZ')} دج</span></div>
+                      <div className="border-t-2 border-sky-100 pt-4 flex justify-between items-center"><span className="font-extrabold text-[#0ea5e9] text-xl">الإجمالي</span><span className="font-extrabold text-[#0ea5e9] text-xl">{orderTotal.toLocaleString('fr-DZ')} دج</span></div>
                     </div>
                   </div>
                 </div>
               )}
 
-              <div className="flex gap-2">
+              <div className="flex gap-3 pt-2">
                 {orderStep > 1 && (
                   <button type="button" onClick={() => setOrderStep((step) => Math.max(step - 1, 1))}
-                    className="px-5 py-3 rounded-full bg-dark-100 text-dark-600 font-semibold hover:bg-dark-200 transition-colors">
+                    className="px-6 py-3 rounded-full bg-sky-50 text-[#0ea5e9] font-extrabold hover:bg-sky-100 transition-colors">
                     رجوع
                   </button>
                 )}
                 {orderStep < 3 ? (
                   <button type="button" onClick={handleNextOrderStep}
-                    className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-primary-600 to-primary-700 text-white py-3 rounded-full font-semibold hover:from-primary-700 hover:to-primary-800 shadow-lg shadow-primary-600/20">
+                    className="flex-1 flex items-center justify-center gap-2 bg-[#0ea5e9] text-white py-3 rounded-full font-extrabold text-lg hover:bg-sky-600 shadow-lg shadow-sky-500/30 transition-all">
                     التالي
                   </button>
                 ) : (
                   <button type="submit" disabled={submitting}
-                    className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-primary-600 to-primary-700 text-white py-3 rounded-full font-semibold hover:from-primary-700 hover:to-primary-800 disabled:opacity-50 shadow-lg shadow-primary-600/20">
-                    {submitting ? <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> جاري الإرسال...</> : <><FiSend size={18} /> تأكيد وإرسال الطلب</>}
+                    className="flex-1 flex items-center justify-center gap-2 bg-[#0ea5e9] text-white py-3 rounded-full font-extrabold text-lg hover:bg-sky-600 disabled:opacity-50 shadow-lg shadow-sky-500/30 transition-all">
+                    {submitting ? <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> جاري الإرسال...</> : <><FiSend size={20} /> تأكيد وإرسال الطلب</>}
                   </button>
                 )}
               </div>
