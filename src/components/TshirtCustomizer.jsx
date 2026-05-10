@@ -15,16 +15,16 @@ export default function TshirtCustomizer({ tshirtImageUrl, onUpdate }) {
   const dragOffset = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
-    if (!tshirtImageUrl) return;
+    const src = tshirtImageUrl || '/tshirt-template.png';
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => setTshirtImg(img);
     img.onerror = () => {
       const img2 = new Image();
       img2.onload = () => setTshirtImg(img2);
-      img2.src = tshirtImageUrl;
+      img2.src = src;
     };
-    img.src = tshirtImageUrl;
+    img.src = src;
   }, [tshirtImageUrl]);
 
   const draw = useCallback((ctx) => {
@@ -33,12 +33,8 @@ export default function TshirtCustomizer({ tshirtImageUrl, onUpdate }) {
     if (tshirtImg) {
       ctx.drawImage(tshirtImg, 0, 0, W, H);
     } else {
-      ctx.fillStyle = '#f3f4f6';
+      ctx.fillStyle = '#f9fafb';
       ctx.fillRect(0, 0, W, H);
-      ctx.fillStyle = '#d1d5db';
-      ctx.font = 'bold 100px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('👕', W / 2, H / 2 + 35);
     }
 
     if (designImg) {
